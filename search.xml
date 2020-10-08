@@ -3,7 +3,7 @@
   <entry>
     <title>Kafka客户端命令操作</title>
     <url>/2020/10/08/Kafka%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%91%BD%E4%BB%A4%E6%93%8D%E4%BD%9C/</url>
-    <content><![CDATA[<h2 id="Kafka-客户端命令操作"><a href="#Kafka-客户端命令操作" class="headerlink" title="Kafka 客户端命令操作"></a>Kafka 客户端命令操作</h2><h4 id="Topic-管理"><a href="#Topic-管理" class="headerlink" title="Topic 管理"></a>Topic 管理</h4><p><code>kafka-topics.sh</code>  的参数</p>
+    <content><![CDATA[<h4 id="Topic-管理"><a href="#Topic-管理" class="headerlink" title="Topic 管理"></a>Topic 管理</h4><p><code>kafka-topics.sh</code>  的参数</p>
 <table>
 <thead>
 <tr>
@@ -189,7 +189,7 @@
 
 ]]></content>
       <tags>
-        <tag>Kafka</tag>
+        <tag>kafka 命令</tag>
       </tags>
   </entry>
   <entry>
@@ -272,5 +272,8 @@
 <p>或者平衡单个Topic</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">bin&#x2F;kafka-preferred-replica-election.sh --zookeeper gs-kafka1:2181 --path-to-json-file topicPartition.json</span><br></pre></td></tr></table></figure>
 ]]></content>
+      <tags>
+        <tag>kafka 扩容</tag>
+      </tags>
   </entry>
 </search>
