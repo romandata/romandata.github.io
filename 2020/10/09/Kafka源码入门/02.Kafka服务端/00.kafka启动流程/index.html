@@ -78,7 +78,7 @@
 <link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="kafka," />
+  <meta name="keywords" content="Hexo, NexT" />
 
 
 
@@ -94,16 +94,15 @@
 
 
 
-<meta name="description" content="日志： 123456Exception in thread &quot;Thread-0&quot; org.apache.kafka.clients.consumer.CommitFailedException: Commit cannot be completed since the group has already rebalanced and assigned the partition">
+<meta name="description" content="通过 kafka-server-start.sh 发现，启动类为 kafka.Kafka，直接看类代码： 123456789101112131415161718192021222324def main(args: Array[String]): Unit &#x3D; &amp;#123;  try &amp;#123;      &#x2F;&#x2F; 服务启动配置    val serverProps &#x3D; getPropsFromAr">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Kafka问题记录">
-<meta property="og:url" content="https://romandata.github.io/2020/10/09/Kafka%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95/index.html">
+<meta property="og:title" content="Kafka源码入门&#x2F;02.Kafka服务端&#x2F;00.kafka启动流程">
+<meta property="og:url" content="https://romandata.github.io/2020/10/09/Kafka%E6%BA%90%E7%A0%81%E5%85%A5%E9%97%A8/02.Kafka%E6%9C%8D%E5%8A%A1%E7%AB%AF/00.kafka%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/index.html">
 <meta property="og:site_name" content="Roman&#39;s Data">
-<meta property="og:description" content="日志： 123456Exception in thread &quot;Thread-0&quot; org.apache.kafka.clients.consumer.CommitFailedException: Commit cannot be completed since the group has already rebalanced and assigned the partition">
-<meta property="article:published_time" content="2020-10-09T15:34:03.000Z">
-<meta property="article:modified_time" content="2020-10-09T15:38:35.966Z">
+<meta property="og:description" content="通过 kafka-server-start.sh 发现，启动类为 kafka.Kafka，直接看类代码： 123456789101112131415161718192021222324def main(args: Array[String]): Unit &#x3D; &amp;#123;  try &amp;#123;      &#x2F;&#x2F; 服务启动配置    val serverProps &#x3D; getPropsFromAr">
+<meta property="article:published_time" content="2020-10-09T15:43:10.945Z">
+<meta property="article:modified_time" content="2020-10-09T15:43:10.945Z">
 <meta property="article:author" content="Roman">
-<meta property="article:tag" content="kafka">
 <meta name="twitter:card" content="summary">
 
 
@@ -133,13 +132,13 @@
 
 
 
-  <link rel="canonical" href="https://romandata.github.io/2020/10/09/Kafka问题记录/"/>
+  <link rel="canonical" href="https://romandata.github.io/2020/10/09/Kafka源码入门/02.Kafka服务端/00.kafka启动流程/"/>
 
 
 
 
 
-  <title>Kafka问题记录 | Roman's Data</title>
+  <title>Kafka源码入门/02.Kafka服务端/00.kafka启动流程 | Roman's Data</title>
   
 
 
@@ -336,7 +335,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://romandata.github.io/2020/10/09/Kafka%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95/">
+    <link itemprop="mainEntityOfPage" href="https://romandata.github.io/2020/10/09/Kafka%E6%BA%90%E7%A0%81%E5%85%A5%E9%97%A8/02.Kafka%E6%9C%8D%E5%8A%A1%E7%AB%AF/00.kafka%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Roman">
@@ -353,7 +352,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Kafka问题记录</h1>
+          <h1 class="post-title" itemprop="name headline">Kafka源码入门/02.Kafka服务端/00.kafka启动流程</h1>
         
 
         <div class="post-meta">
@@ -365,7 +364,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-10-09T23:34:03+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-10-09T23:43:10+08:00">
                 2020-10-09
               </time>
             
@@ -375,39 +374,6 @@
             
           </span>
 
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/kafka/" itemprop="url" rel="index">
-                    <span itemprop="name">kafka</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/kafka/%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C/" itemprop="url" rel="index">
-                    <span itemprop="name">基础操作</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -436,31 +402,27 @@
       
 
       
-        <p>日志：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Exception in thread &quot;Thread-0&quot; org.apache.kafka.clients.consumer.CommitFailedException: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member. This means that the time between subsequent calls to poll() was longer than the configured max.poll.interval.ms, which typically implies that the poll loop is spending too much time message processing. You can address this either by increasing the session timeout or by reducing the maximum size of batches returned in poll() with max.poll.records.</span><br><span class="line">	at org.apache.kafka.clients.consumer.internals.ConsumerCoordinator.sendOffsetCommitRequest(ConsumerCoordinator.java:702)</span><br><span class="line">	at org.apache.kafka.clients.consumer.internals.ConsumerCoordinator.commitOffsetsSync(ConsumerCoordinator.java:581)</span><br><span class="line">	at org.apache.kafka.clients.consumer.KafkaConsumer.commitSync(KafkaConsumer.java:1090)</span><br><span class="line">	at com.eebbk.da.kafka2HDFS.handle.KafkaToParquetAutoOffset.run(KafkaToParquetAutoOffset.java:287)</span><br><span class="line">	at java.lang.Thread.run(Thread.java:748)</span><br></pre></td></tr></table></figure>
+        <p> 通过 <code>kafka-server-start.sh</code> 发现，启动类为 <code>kafka.Kafka</code>，直接看类代码：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">// 服务启动配置</span></span><br><span class="line">    <span class="keyword">val</span> serverProps = getPropsFromArgs(args)</span><br><span class="line">      <span class="comment">// 启动类</span></span><br><span class="line">    <span class="keyword">val</span> kafkaServerStartable = <span class="type">KafkaServerStartable</span>.fromProps(serverProps)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// attach shutdown handler to catch control-c</span></span><br><span class="line">    <span class="type">Runtime</span>.getRuntime().addShutdownHook(<span class="keyword">new</span> <span class="type">Thread</span>() &#123;</span><br><span class="line">      <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">run</span></span>() = &#123;</span><br><span class="line">        kafkaServerStartable.shutdown</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;)</span><br><span class="line"></span><br><span class="line">    kafkaServerStartable.startup</span><br><span class="line">    kafkaServerStartable.awaitShutdown</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> &#123;</span><br><span class="line">    <span class="keyword">case</span> e: <span class="type">Throwable</span> =&gt;</span><br><span class="line">      fatal(e)</span><br><span class="line">      <span class="type">System</span>.exit(<span class="number">1</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="type">System</span>.exit(<span class="number">0</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>查看日志，因为处理poll到数据的时间超过了 <code>max.poll.interval.ms</code>  导致 <code>consumer</code> 发生了 <code>rebalance</code> ，从而无法手动提交 <code>offset</code>。</p>
-<p>溯源：影响处理poll数据的参数是 <code>max.poll.records</code>，因为此参数设置过大，导致超  <code>max.poll.interval.ms</code>  时间。（<code>max.poll.records</code>默认500条，<code>max.poll.interval.ms</code> 默认300000）</p>
-<p>解决办法：降低吞吐量，即将 <code>max.poll.records</code> 调小，目前环境我设置的为5000，调整为2000</p>
-<p>​                 调整超时时间，将 <code>max.poll.interval.ms</code>  调整为 600000</p>
-<p>​                 在手动提交失败是，跳过本次提交，继续处理，期待下一次提交。</p>
-<h3 id="KAFKA-broker一直起不来，有时候有报错信息，有时候直接崩溃。"><a href="#KAFKA-broker一直起不来，有时候有报错信息，有时候直接崩溃。" class="headerlink" title="KAFKA broker一直起不来，有时候有报错信息，有时候直接崩溃。"></a>KAFKA broker一直起不来，有时候有报错信息，有时候直接崩溃。</h3><p>启动日志：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">java.io.IOException: Map failed</span><br><span class="line">        at sun.nio.ch.FileChannelImpl.map(FileChannelImpl.java:888)</span><br><span class="line">        at kafka.log.AbstractIndex$$anonfun$resize$1.apply(AbstractIndex.scala:111)</span><br><span class="line">        at kafka.log.AbstractIndex$$anonfun$resize$1.apply(AbstractIndex.scala:101)</span><br><span class="line">        at kafka.utils.CoreUtils$.inLock(CoreUtils.scala:213)</span><br><span class="line">        at kafka.log.AbstractIndex.resize(AbstractIndex.scala:101)</span><br><span class="line">        at kafka.log.LogSegment.truncateTo(LogSegment.scala:292)</span><br><span class="line">        at kafka.log.Log.truncateTo(Log.scala:893)</span><br><span class="line">        at kafka.log.LogManager$$anonfun$truncateTo$2.apply(LogManager.scala:301)</span><br><span class="line">        at kafka.log.LogManager$$anonfun$truncateTo$2.apply(LogManager.scala:293)</span><br><span class="line">        at scala.collection.TraversableLike$WithFilter$$anonfun$foreach$1.apply(TraversableLike.scala:733)</span><br><span class="line">        at scala.collection.immutable.HashMap$HashMap1.foreach(HashMap.scala:221)</span><br><span class="line">        at scala.collection.immutable.HashMap$HashTrieMap.foreach(HashMap.scala:428)</span><br><span class="line">        at scala.collection.immutable.HashMap$HashTrieMap.foreach(HashMap.scala:428)</span><br><span class="line">        at scala.collection.TraversableLike$WithFilter.foreach(TraversableLike.scala:732)</span><br><span class="line">        at kafka.log.LogManager.truncateTo(LogManager.scala:293)</span><br><span class="line">        at kafka.server.ReplicaManager.makeFollowers(ReplicaManager.scala:854)</span><br><span class="line">        at kafka.server.ReplicaManager.becomeLeaderOrFollower(ReplicaManager.scala:700)</span><br><span class="line">        at kafka.server.KafkaApis.handleLeaderAndIsrRequest(KafkaApis.scala:148)</span><br><span class="line">        at kafka.server.KafkaApis.handle(KafkaApis.scala:84)</span><br><span class="line">        at kafka.server.KafkaRequestHandler.run(KafkaRequestHandler.scala:62)</span><br><span class="line">        at java.lang.Thread.run(Thread.java:745)</span><br><span class="line">Caused by: java.lang.OutOfMemoryError: Map failed</span><br><span class="line">        at sun.nio.ch.FileChannelImpl.map0(Native Method)</span><br><span class="line">        at sun.nio.ch.FileChannelImpl.map(FileChannelImpl.java:885)</span><br></pre></td></tr></table></figure>
+<p>启动为 KafkaServerStartable 对象进行启动，而 KafkaServerStartable 中具体的实现是 KafkaServer对象的启动，具体启动方法是：</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br></pre></td><td class="code"><pre><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * Start up API for bringing up a single instance of the Kafka server.</span></span><br><span class="line"><span class="comment">   * Instantiates the LogManager, the SocketServer and the request handlers - KafkaRequestHandlers</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">startup</span></span>() &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      info(<span class="string">"starting"</span>)</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span>(isShuttingDown.get)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="type">IllegalStateException</span>(<span class="string">"Kafka server is still shutting down, cannot re-start!"</span>)</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span>(startupComplete.get)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">      <span class="keyword">val</span> canStartup = isStartingUp.compareAndSet(<span class="literal">false</span>, <span class="literal">true</span>)</span><br><span class="line">      <span class="keyword">if</span> (canStartup) &#123;</span><br><span class="line">        <span class="comment">// 状态调整为 Starting</span></span><br><span class="line">        brokerState.newState(<span class="type">Starting</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* start scheduler 启动调度器 */</span></span><br><span class="line">        kafkaScheduler.startup()</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* setup zookeeper 初始化 ZK连接，同时创建 根节点.*/</span></span><br><span class="line">        zkUtils = initZk()</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* Get or create cluster_id 创建或获取 cluster id*/</span></span><br><span class="line">        _clusterId = getOrGenerateClusterId(zkUtils)</span><br><span class="line">        info(<span class="string">s"Cluster ID = <span class="subst">$clusterId</span>"</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* generate brokerId 获取 broker id 以及broker上对应的log_dirs*/</span></span><br><span class="line">        config.brokerId =  getBrokerId</span><br><span class="line">        <span class="keyword">this</span>.logIdent = <span class="string">"[Kafka Server "</span> + config.brokerId + <span class="string">"], "</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">/* create and configure metrics 创建一个metrics，这个metrics提供给kafka内部使用*/</span></span><br><span class="line">        <span class="keyword">val</span> reporters = config.getConfiguredInstances(<span class="type">KafkaConfig</span>.<span class="type">MetricReporterClassesProp</span>, classOf[<span class="type">MetricsReporter</span>],</span><br><span class="line">            <span class="type">Map</span>[<span class="type">String</span>, <span class="type">AnyRef</span>](<span class="type">KafkaConfig</span>.<span class="type">BrokerIdProp</span> -&gt; (config.brokerId.toString)).asJava)</span><br><span class="line">        reporters.add(<span class="keyword">new</span> <span class="type">JmxReporter</span>(jmxPrefix))</span><br><span class="line">        <span class="keyword">val</span> metricConfig = <span class="type">KafkaServer</span>.metricConfig(config)</span><br><span class="line">        metrics = <span class="keyword">new</span> <span class="type">Metrics</span>(metricConfig, reporters, time, <span class="literal">true</span>)</span><br><span class="line">		</span><br><span class="line">        <span class="comment">// 容量管理的一个东西，比如限制kafka producer生产传输速度</span></span><br><span class="line">        quotaManagers = <span class="type">QuotaFactory</span>.instantiate(config, metrics, time)</span><br><span class="line">        notifyClusterListeners(kafkaMetricsReporters ++ reporters.asScala)</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* start log manager 构建LogManager，并运行。broker端的重要线程 */</span></span><br><span class="line">        logManager = createLogManager(zkUtils.zkClient, brokerState)</span><br><span class="line">        logManager.startup()</span><br><span class="line">          </span><br><span class="line">		<span class="comment">//  每个partition的状态缓存，每个broker都会异步维护同一个缓存，更新请求来自controller</span></span><br><span class="line">        metadataCache = <span class="keyword">new</span> <span class="type">MetadataCache</span>(config.brokerId)</span><br><span class="line">        credentialProvider = <span class="keyword">new</span> <span class="type">CredentialProvider</span>(config.saslEnabledMechanisms)</span><br><span class="line">		<span class="comment">// NIO socket server 创建和启动</span></span><br><span class="line">        socketServer = <span class="keyword">new</span> <span class="type">SocketServer</span>(config, metrics, time, credentialProvider)</span><br><span class="line">        socketServer.startup()</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* start replica manager 副本管理器初始化和启动 */</span></span><br><span class="line">        replicaManager = <span class="keyword">new</span> <span class="type">ReplicaManager</span>(config, metrics, time, zkUtils, kafkaScheduler, logManager,</span><br><span class="line">          isShuttingDown, quotaManagers.follower)</span><br><span class="line">        replicaManager.startup()</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* start kafka controller 控制器初始化和启动 */</span></span><br><span class="line">        kafkaController = <span class="keyword">new</span> <span class="type">KafkaController</span>(config, zkUtils, brokerState, time, metrics, threadNamePrefix)</span><br><span class="line">        kafkaController.startup()</span><br><span class="line"></span><br><span class="line">        adminManager = <span class="keyword">new</span> <span class="type">AdminManager</span>(config, metrics, metadataCache, zkUtils)</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* start group coordinator 管理消费组成员和offset */</span></span><br><span class="line">        <span class="comment">// Hardcode Time.SYSTEM for now as some Streams tests fail otherwise, it would be good to fix the underlying issue</span></span><br><span class="line">        groupCoordinator = <span class="type">GroupCoordinator</span>(config, zkUtils, replicaManager, <span class="type">Time</span>.<span class="type">SYSTEM</span>)</span><br><span class="line">        groupCoordinator.startup()</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* Get the authorizer and initialize it if one is specified.*/</span></span><br><span class="line">        authorizer = <span class="type">Option</span>(config.authorizerClassName).filter(_.nonEmpty).map &#123; authorizerClassName =&gt;</span><br><span class="line">          <span class="keyword">val</span> authZ = <span class="type">CoreUtils</span>.createObject[<span class="type">Authorizer</span>](authorizerClassName)</span><br><span class="line">          authZ.configure(config.originals())</span><br><span class="line">          authZ</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* start processing requests 处理各种kafka的请求*/</span></span><br><span class="line">        apis = <span class="keyword">new</span> <span class="type">KafkaApis</span>(socketServer.requestChannel, replicaManager, adminManager, groupCoordinator,</span><br><span class="line">          kafkaController, zkUtils, config.brokerId, config, metadataCache, metrics, authorizer, quotaManagers,</span><br><span class="line">          clusterId, time)</span><br><span class="line">		<span class="comment">// 请求池</span></span><br><span class="line">        requestHandlerPool = <span class="keyword">new</span> <span class="type">KafkaRequestHandlerPool</span>(config.brokerId, socketServer.requestChannel, apis, time,</span><br><span class="line">          config.numIoThreads)</span><br><span class="line"></span><br><span class="line">        <span class="type">Mx4jLoader</span>.maybeLoad()</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* start dynamic config manager Topic 配置管理请求，client配置管理请求，broker配置管理请求，用户配置管理请求 */</span></span><br><span class="line">        dynamicConfigHandlers = <span class="type">Map</span>[<span class="type">String</span>, <span class="type">ConfigHandler</span>](<span class="type">ConfigType</span>.<span class="type">Topic</span> -&gt; <span class="keyword">new</span> <span class="type">TopicConfigHandler</span>(logManager, config, quotaManagers),</span><br><span class="line">                                                           <span class="type">ConfigType</span>.<span class="type">Client</span> -&gt; <span class="keyword">new</span> <span class="type">ClientIdConfigHandler</span>(quotaManagers),</span><br><span class="line">                                                           <span class="type">ConfigType</span>.<span class="type">User</span> -&gt; <span class="keyword">new</span> <span class="type">UserConfigHandler</span>(quotaManagers, credentialProvider),</span><br><span class="line">                                                           <span class="type">ConfigType</span>.<span class="type">Broker</span> -&gt; <span class="keyword">new</span> <span class="type">BrokerConfigHandler</span>(config, quotaManagers))</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Create the config manager. start listening to notifications</span></span><br><span class="line">        <span class="comment">// 动态监听所有请求，开始启动</span></span><br><span class="line">        dynamicConfigManager = <span class="keyword">new</span> <span class="type">DynamicConfigManager</span>(zkUtils, dynamicConfigHandlers)</span><br><span class="line">        dynamicConfigManager.startup()</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* tell everyone we are alive 监听kafka进程状态，健康管理*/</span></span><br><span class="line">        <span class="keyword">val</span> listeners = config.advertisedListeners.map &#123; endpoint =&gt;</span><br><span class="line">          <span class="keyword">if</span> (endpoint.port == <span class="number">0</span>)</span><br><span class="line">            endpoint.copy(port = socketServer.boundPort(endpoint.listenerName))</span><br><span class="line">          <span class="keyword">else</span></span><br><span class="line">            endpoint</span><br><span class="line">        &#125;</span><br><span class="line">        kafkaHealthcheck = <span class="keyword">new</span> <span class="type">KafkaHealthcheck</span>(config.brokerId, listeners, zkUtils, config.rack,</span><br><span class="line">          config.interBrokerProtocolVersion)</span><br><span class="line">        kafkaHealthcheck.startup()</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Now that the broker id is successfully registered via KafkaHealthcheck, checkpoint it</span></span><br><span class="line">        checkpointBrokerId(config.brokerId)</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* register broker metrics */</span></span><br><span class="line">        registerStats()</span><br><span class="line">		<span class="comment">// 更新broker状态为 Runing</span></span><br><span class="line">        brokerState.newState(<span class="type">RunningAsBroker</span>)</span><br><span class="line">        shutdownLatch = <span class="keyword">new</span> <span class="type">CountDownLatch</span>(<span class="number">1</span>)</span><br><span class="line">        <span class="comment">// 启动完成，修改相关状态</span></span><br><span class="line">        startupComplete.set(<span class="literal">true</span>)</span><br><span class="line">        isStartingUp.set(<span class="literal">false</span>)</span><br><span class="line">        <span class="type">AppInfoParser</span>.registerAppInfo(jmxPrefix, config.brokerId.toString)</span><br><span class="line">        info(<span class="string">"started"</span>)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> &#123;</span><br><span class="line">      <span class="keyword">case</span> e: <span class="type">Throwable</span> =&gt;</span><br><span class="line">        fatal(<span class="string">"Fatal error during KafkaServer startup. Prepare to shutdown"</span>, e)</span><br><span class="line">        isStartingUp.set(<span class="literal">false</span>)</span><br><span class="line">        shutdown()</span><br><span class="line">        <span class="keyword">throw</span> e</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">其他直接JVM崩溃</span><br></pre></td></tr></table></figure>
-
-<p>JVM崩溃日志：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">#</span><br><span class="line"># There is insufficient memory for the Java Runtime Environment to continue.</span><br><span class="line"># Native memory allocation (malloc) failed to allocate 312 bytes for AllocateHeap</span><br><span class="line"># Possible reasons:</span><br><span class="line">#   The system is out of physical RAM or swap space</span><br><span class="line">#   In 32 bit mode, the process size limit was hit</span><br><span class="line"># Possible solutions:</span><br><span class="line">#   Reduce memory load on the system</span><br><span class="line">#   Increase physical memory or swap space</span><br><span class="line">#   Check if swap backing store is full</span><br><span class="line">#   Use 64 bit Java on a 64 bit OS</span><br><span class="line">#   Decrease Java heap size (-Xmx&#x2F;-Xms)</span><br><span class="line">#   Decrease number of Java threads</span><br><span class="line">#   Decrease Java thread stack sizes (-Xss)</span><br><span class="line">#   Set larger code cache with -XX:ReservedCodeCacheSize&#x3D;</span><br><span class="line"># This output file may be truncated or incomplete.</span><br><span class="line">#</span><br><span class="line">#  Out of Memory Error (allocation.inline.hpp:61), pid&#x3D;56865, tid&#x3D;0x00007fb2aa587700</span><br><span class="line">#</span><br><span class="line"># JRE version: Java(TM) SE Runtime Environment (8.0_131-b11) (build 1.8.0_131-b11)</span><br><span class="line"># Java VM: Java HotSpot(TM) 64-Bit Server VM (25.131-b11 mixed mode linux-amd64 compressed oops)</span><br><span class="line"># Core dump written. Default location: &#x2F;data1&#x2F;kafka&#x2F;kafka_2.11-0.10.2.1&#x2F;core or core.56865</span><br><span class="line">#</span><br><span class="line"></span><br><span class="line">---------------  T H R E A D  ---------------</span><br><span class="line"></span><br><span class="line">Current thread (0x00007fcaa1e3f000):  JavaThread &quot;ExpirationReaper-5&quot; [_thread_in_vm, id&#x3D;57248, stack(0x00007fb2aa487000,0x00007fb2aa588000)]</span><br><span class="line"></span><br><span class="line">Stack: [0x00007fb2aa487000,0x00007fb2aa588000],  sp&#x3D;0x00007fb2aa586900,  free space&#x3D;1022k</span><br><span class="line">Native frames: (J&#x3D;compiled Java code, j&#x3D;interpreted, Vv&#x3D;VM code, C&#x3D;native code)</span><br><span class="line">V  [libjvm.so+0xac826a]</span><br><span class="line">V  [libjvm.so+0x4fd4cb]</span><br><span class="line">V  [libjvm.so+0x2e23c8]</span><br><span class="line">V  [libjvm.so+0x2e2444]</span><br><span class="line">V  [libjvm.so+0x70f40a]</span><br><span class="line">V  [libjvm.so+0xa76910]</span><br><span class="line">V  [libjvm.so+0x927568]</span><br><span class="line">C  [libpthread.so.0+0x7aa1]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">---------------  P R O C E S S  ---------------</span><br><span class="line">...</span><br><span class="line">...</span><br><span class="line">power management:</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">Memory: 4k page, physical 65860516k(289912k free), swap 20479996k(19336528k free)</span><br><span class="line"></span><br><span class="line">vm_info: Java HotSpot(TM) 64-Bit Server VM (25.131-b11) for linux-amd64 JRE (1.8.0_131-b11), built on Mar 15 2017 01:23:40 by &quot;java_re&quot; with gcc 4.3.0 20080428 (Red Hat 4.3.0-8)</span><br><span class="line"></span><br><span class="line">time: Wed Jun 10 08:48:32 2020</span><br><span class="line">elapsed time: 322 seconds (0d 0h 5m 22s)</span><br></pre></td></tr></table></figure>
-
-<p>搜索  <a href="https://blog.csdn.net/b644ROfP20z37485O35M/article/details/81571710" target="_blank" rel="noopener">https://blog.csdn.net/b644ROfP20z37485O35M/article/details/81571710</a></p>
-<h5 id="问题解决"><a href="#问题解决" class="headerlink" title="问题解决"></a>问题解决</h5><p>从上面分析解决问题的方法有两个</p>
-<ul>
-<li>增大系统限制<code>/proc/sys/vm/max_map_count</code>  <code>vm.max_map_count=200000直接写到/etc/sysctl.conf中,然后执行sysctl -p</code></li>
-<li>kafka的索引文件是否不需要一直有？是否可以限制一下</li>
-</ul>
-<h5 id="问题总结"><a href="#问题总结" class="headerlink" title="问题总结"></a>问题总结</h5><p>上面的过程是我思考的一个过程，可能过程有些绕，不过我这里可以来个简单的概述，描述下整个问题发生的过程：</p>
-<p>kafka做了很多索引文件的内存映射，每个索引文件占用的内存还很大，这些索引文件并且一直占着没有释放，于是随着索引文件数的增多，而慢慢达到了物理内存的一个上限，比如映射到某个索引文件的时候，物理内存还剩1G，但是我们要映射一个超过1G的文件，因此会映射失败，映射失败接着就做了一次System GC，而在System GC过程中因为PermSize和MaxPermSize不一样，从而导致了在Full GC完之后Perm进行扩容，在扩容的时候因为又调用了一次mmap，而在mmap的时候check是否达到了vma的最大上限，也就是<code>/proc/sys/vm/max_map_count</code>里的65530，如果超过了，就直接crash了。</p>
-<p>这只是我从此次crash文件里能想像到的一个现场，当然其实可能会有更多的场景，只要是能触发mmap动作的地方都有可能是导致crash的案发现场，比如后面又给了我一个crash文件，是在创建线程栈的时候因为mmap而导致的crash，完全和OOM没有关系，所以根本原因还是因为kafka做了太多的索引文件映射，导致mmap的vma非常多，超过了系统的限制，从而导致了crash。</p>
+<p>总的来说，在KafkaServer启动流程中，先后启动了以下几个模块：</p>
+<ol>
+<li>kafkaScheduler 调度模块，负责kafka内部的周期性调度和非周期性调度</li>
+<li>初始化 Zookeeper 工具类</li>
+<li>实例化 metrics</li>
+<li>quotaManagers 限额管理模块</li>
+<li>logManager 日志管理模块</li>
+<li>socketServer 网络服务模块</li>
+<li>replicaManager 副本管理模块</li>
+<li>kafkaController kafka控制器</li>
+<li>adminManager 暂时不知道具体干嘛的，应该做客户端管理用的</li>
+<li>groupCoordinator  消费组协调器</li>
+<li>apis 和 requestHandlerPool 请求API和请求池</li>
+<li>dynamicConfigManager 动态配置管理</li>
+</ol>
 
       
     </div>
@@ -476,12 +438,6 @@
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/tags/kafka/" rel="tag"># kafka</a>
-          
-        </div>
-      
 
       
       
@@ -491,8 +447,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/10/09/Kafka%E9%9B%86%E7%BE%A4%E6%89%A9%E5%AE%B9%E6%93%8D%E4%BD%9C%E8%AE%B0%E5%BD%95/" rel="next" title="Kafka集群扩容操作记录">
-                <i class="fa fa-chevron-left"></i> Kafka集群扩容操作记录
+              <a href="/2020/10/09/Kafka%E6%BA%90%E7%A0%81%E5%85%A5%E9%97%A8/01.%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%91%BD%E4%BB%A4/01.kafka-config.sh/" rel="next" title="Kafka源码入门/01.客户端命令/01.kafka-config.sh">
+                <i class="fa fa-chevron-left"></i> Kafka源码入门/01.客户端命令/01.kafka-config.sh
               </a>
             
           </div>
@@ -500,10 +456,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2020/10/09/Kafka%E6%BA%90%E7%A0%81%E5%85%A5%E9%97%A8/01.%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%91%BD%E4%BB%A4/00.kafka-topic.sh/" rel="prev" title="Kafka源码入门/01.客户端命令/00.kafka-topic.sh">
-                Kafka源码入门/01.客户端命令/00.kafka-topic.sh <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -555,17 +507,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview sidebar-panel">
+      <section class="site-overview sidebar-panel sidebar-panel-active">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/blog.jpg"
@@ -627,22 +570,6 @@
 
       </section>
 
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#KAFKA-broker一直起不来，有时候有报错信息，有时候直接崩溃。"><span class="nav-number">1.</span> <span class="nav-text">KAFKA broker一直起不来，有时候有报错信息，有时候直接崩溃。</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#问题解决"><span class="nav-number">1.0.1.</span> <span class="nav-text">问题解决</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#问题总结"><span class="nav-number">1.0.2.</span> <span class="nav-text">问题总结</span></a></li></ol></li></ol></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
       
 
       
