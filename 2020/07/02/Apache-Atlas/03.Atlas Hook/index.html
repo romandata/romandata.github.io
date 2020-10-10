@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Apache,Atlas,Hbase,Kafka,Hive,Spark-sql," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="Atlas HookAtlas 提供了关于 Hive、HBase、Kafka、Sqoop、Storm 和 Falcon 等组件的 Hook。 在安装包中已经含有 hook 和 hook-bin，不需要像官网所说，需要解压相关hook包，然后拷贝到安装目录。 Hive Hook分批量导入 和 hook 实时跟踪 批量导入 hive 元数据import_hive.sh 脚本在 安装包的 bin 目录下">
+<meta property="og:type" content="article">
+<meta property="og:title" content="atlas-Hook">
+<meta property="og:url" content="https://romandata.github.io/2020/07/02/Apache-Atlas/03.Atlas%20Hook/index.html">
+<meta property="og:site_name" content="Roman&#39;s Data">
+<meta property="og:description" content="Atlas HookAtlas 提供了关于 Hive、HBase、Kafka、Sqoop、Storm 和 Falcon 等组件的 Hook。 在安装包中已经含有 hook 和 hook-bin，不需要像官网所说，需要解压相关hook包，然后拷贝到安装目录。 Hive Hook分批量导入 和 hook 实时跟踪 批量导入 hive 元数据import_hive.sh 脚本在 安装包的 bin 目录下">
+<meta property="article:published_time" content="2020-07-02T12:38:33.000Z">
+<meta property="article:modified_time" content="2020-10-10T16:54:54.282Z">
+<meta property="article:author" content="Roman">
+<meta property="article:tag" content="Apache">
+<meta property="article:tag" content="Atlas">
+<meta property="article:tag" content="Hbase">
+<meta property="article:tag" content="Kafka">
+<meta property="article:tag" content="Hive">
+<meta property="article:tag" content="Spark-sql">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    sidebar: {"position":"left","display":"post","offset":6,"offset_float":6,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://romandata.github.io/2020/07/02/Apache-Atlas/03.Atlas Hook/"/>
+
+
+
+
+
+  <title>atlas-Hook | Roman's Data</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Roman's Data</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">铁马冰河入梦来</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-sitemap">
+          <a href="/sitemap.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br />
+            
+            站点地图
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://romandata.github.io/2020/07/02/Apache-Atlas/03.Atlas%20Hook/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Roman">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/blog.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Roman's Data">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">atlas-Hook</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-07-02T20:38:33+08:00">
+                2020-07-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Atlas/" itemprop="url" rel="index">
+                    <span itemprop="name">Apache-Atlas</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Atlas-Hook"><a href="#Atlas-Hook" class="headerlink" title="Atlas Hook"></a>Atlas Hook</h3><p>Atlas 提供了关于 Hive、HBase、Kafka、Sqoop、Storm 和 Falcon 等组件的 Hook。</p>
+<p>在安装包中已经含有 hook 和 hook-bin，不需要像官网所说，需要解压相关hook包，然后拷贝到安装目录。</p>
+<h4 id="Hive-Hook"><a href="#Hive-Hook" class="headerlink" title="Hive Hook"></a>Hive Hook</h4><p>分批量导入 和 hook 实时跟踪</p>
+<h6 id="批量导入-hive-元数据"><a href="#批量导入-hive-元数据" class="headerlink" title="批量导入 hive 元数据"></a>批量导入 hive 元数据</h6><p>import_hive.sh 脚本在 安装包的 bin 目录下。所以还是需要将编译后的 hook 包进行解压，拷贝此脚本。</p>
+<p>直接执行会报错，少依赖包。如下三个，下载后放到 $ATLAS_HOME/hook/hive/atlas-hive-plugin-impl/ 下。</p>
+<p>wget <a href="https://repo1.maven.org/maven2/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.9.8/jackson-module-jaxb-annotations-2.9.8.jar" target="_blank" rel="noopener">https://repo1.maven.org/maven2/com/fasterxml/jackson/module/jackson-module-jaxb-annotations/2.9.8/jackson-module-jaxb-annotations-2.9.8.jar</a></p>
+<p>wget <a href="https://repo1.maven.org/maven2/com/fasterxml/jackson/jaxrs/jackson-jaxrs-base/2.9.8/jackson-jaxrs-base-2.9.8.jar" target="_blank" rel="noopener">https://repo1.maven.org/maven2/com/fasterxml/jackson/jaxrs/jackson-jaxrs-base/2.9.8/jackson-jaxrs-base-2.9.8.jar</a></p>
+<p>wget <a href="https://repo1.maven.org/maven2/com/fasterxml/jackson/jaxrs/jackson-jaxrs-json-provider/2.9.8/jackson-jaxrs-json-provider-2.9.8.jar" target="_blank" rel="noopener">https://repo1.maven.org/maven2/com/fasterxml/jackson/jaxrs/jackson-jaxrs-json-provider/2.9.8/jackson-jaxrs-json-provider-2.9.8.jar</a></p>
+<p>之后再执行，执行日志位于 $ATLAS_HOME/logs/import_hive.log</p>
+<h6 id="hook-跟踪"><a href="#hook-跟踪" class="headerlink" title="hook 跟踪"></a>hook 跟踪</h6><p>atlas 提供了对应的 hive atlas hook 来进行跟踪 hive cli 里面的操作来进行元数据的更新。配置 hook 步骤如下：</p>
+<ol>
+<li><p>在 hive-env.sh 里面增加如下内容：即添加 hive hook 的目录。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export HIVE_AUX_JARS_PATH&#x3D;&#x2F;data&#x2F;atlas&#x2F;apache-atlas-2.0.0&#x2F;hook&#x2F;hive</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在 hive-site.xml 内增加配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&lt;property&gt;</span><br><span class="line">     &lt;name&gt;atlas.cluster.name&lt;&#x2F;name&gt;</span><br><span class="line">     &lt;value&gt;primary&lt;&#x2F;value&gt;</span><br><span class="line">   &lt;&#x2F;property&gt;</span><br><span class="line">   </span><br><span class="line">   &lt;property&gt;</span><br><span class="line">     &lt;name&gt;atlas.hook.hive.maxThreads&lt;&#x2F;name&gt;</span><br><span class="line">     &lt;value&gt;1&lt;&#x2F;value&gt;</span><br><span class="line">   &lt;&#x2F;property&gt;</span><br><span class="line">   </span><br><span class="line">   &lt;property&gt;</span><br><span class="line">     &lt;name&gt;atlas.hook.hive.minThreads&lt;&#x2F;name&gt;</span><br><span class="line">     &lt;value&gt;1&lt;&#x2F;value&gt;</span><br><span class="line">   &lt;&#x2F;property&gt;</span><br><span class="line">   </span><br><span class="line">   &lt;property&gt;</span><br><span class="line">     &lt;name&gt;atlas.rest.address&lt;&#x2F;name&gt;</span><br><span class="line">     &lt;value&gt;http:&#x2F;&#x2F;tmaster:21000&lt;&#x2F;value&gt;</span><br><span class="line">   &lt;&#x2F;property&gt;</span><br><span class="line">   </span><br><span class="line">   # 必要配置，上面四项可不配。 </span><br><span class="line">   &lt;property&gt;</span><br><span class="line">     &lt;name&gt;hive.exec.post.hooks&lt;&#x2F;name&gt;</span><br><span class="line">  &lt;value&gt;org.apache.atlas.hive.hook.HiveHook&lt;&#x2F;value&gt;</span><br><span class="line">   &lt;&#x2F;property&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>修改 atlas 配置文件 atlas-application.properties。如果不修改value，那么可以不增加这些配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># hive hook 相关</span><br><span class="line">atlas.hook.hive.synchronous&#x3D;false # whether to run the hook synchronously. false recommended to avoid delays in Hive query completion. Default: false</span><br><span class="line">atlas.hook.hive.numRetries&#x3D;3      # number of retries for notification failure. Default: 3</span><br><span class="line">atlas.hook.hive.queueSize&#x3D;10000   # queue size for the threadpool. Default: 10000</span><br><span class="line">atlas.cluster.name&#x3D;primary  # clusterName to use in qualifiedName of entities. Default: primary</span><br><span class="line"></span><br><span class="line"># kafka 相关，所有的kafka相关配置加上 atlas.kafka. 前缀即可生效。</span><br><span class="line">atlas.kafka.zookeeper.connect&#x3D;                    # Zookeeper connect URL for Kafka. Example: localhost:2181</span><br><span class="line">atlas.kafka.zookeeper.connection.timeout.ms&#x3D;30000 # Zookeeper connection timeout. Default: 30000</span><br><span class="line">atlas.kafka.zookeeper.session.timeout.ms&#x3D;60000    # Zookeeper session timeout. Default: 60000</span><br><span class="line">atlas.kafka.zookeeper.sync.time.ms&#x3D;20             # Zookeeper sync time. Default: 20</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将 atlas-application.properties 拷贝到 hive conf 目录下，或者直接做个软链接 </p>
+</li>
+<li><p>其他hive节点配置，需要 <code>atlas-application.properties</code>  和 <code>export HIVE_AUX_JARS_PATH=/data/atlas/apache-atlas-2.0.0/hook/hive</code> </p>
+</li>
+</ol>
+<h4 id="Kafka-Hook"><a href="#Kafka-Hook" class="headerlink" title="Kafka Hook"></a>Kafka Hook</h4><p>将编译后的安装包中的 apache-atlas-2.0.0-kafka-hook 中的 jar 包 目录拷贝到 atlas 安装包的 $ATLAS_HOME/hook/kafka/ 下。</p>
+<p>然后 将 atlas 配置文件 打包到  $ATLAS_HOME//hook/kafka/atlas-kafka-plugin-impl/kafka-bridge-2.0.0.jar </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">在 atlas-kafka-plugin-impl 目录下打包</span><br><span class="line">zip -u kafka-bridge-2.0.0.jar atlas-application.properties</span><br></pre></td></tr></table></figure>
+
+<p>将准备好的 hook 和 hook-bin分发到 Kafka 节点</p>
+<p>hook-bin 下执行 import-kafka.sh</p>
+<p><strong>注意点：</strong> </p>
+<ol>
+<li>kafka 版本会有影响，有个 zkUtils 的包，有个方法一直找不到。换个版本就好了，目测是低版本kafka 集群少了未知的包，</li>
+<li>atlas 只会读取与 atlas 集成的 kafka 的 topic 。需要在导入kafka-bridge 包同级目录下增加 atlas-application.properties ，atlas.cluster.name 和 atlas.kafka.zookeeper.connect 两项分别确定 集群名和 目标kafka地址。导入时修改的这两个配置不会影响 atlas 集群中的参数。</li>
+</ol>
+<h4 id="HBase-Hook"><a href="#HBase-Hook" class="headerlink" title="HBase Hook"></a>HBase Hook</h4><p>提前下载缺失的包：<a href="https://mvnrepository.com/artifact/org.apache.htrace/htrace-core4/4.2.0-incubating" target="_blank" rel="noopener">https://mvnrepository.com/artifact/org.apache.htrace/htrace-core4/4.2.0-incubating</a></p>
+<p>HBase-site.xml 增加配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;property&gt;</span><br><span class="line">  &lt;name&gt;hbase.coprocessor.master.classes&lt;&#x2F;name&gt;</span><br><span class="line">  &lt;value&gt;org.apache.atlas.hbase.hook.HBaseAtlasCoprocessor&lt;&#x2F;value&gt;</span><br><span class="line">&lt;&#x2F;property&gt;</span><br></pre></td></tr></table></figure>
+
+<p>atlas 配置文件 atlas-application.properties 拷贝到HBase 所有节点的 config 目录。</p>
+<p>批量导入时，需要增加上面下载的 jar 包 到hook 下的目录下。</p>
+<p>把所有 atlas 下 HBase hook 相关的 jar 包 软链接 到 HBase 下的 lib 目录下。</p>
+<p>HBase 版本问题还未解决。</p>
+<p><strong>针对于 要求不同 hive 不同 HBase 导入时所对应的 qualifiedName 中 default.testhive@testHive 的 testHive 不一样。需要将不同hive 、HBase 集群 中的 atlas-application.properties 中的 atlas.cluster.name。hive不需要重启。HBase需要重启。切记，同一个集群的，要保持配置一样。</strong> </p>
+<h4 id="Spark-Atlas-Connector"><a href="#Spark-Atlas-Connector" class="headerlink" title="Spark-Atlas-Connector"></a>Spark-Atlas-Connector</h4><p><strong>git下载源码</strong>：<a href="https://github.com/hortonworks-spark/spark-atlas-connector/archive/master.zip" target="_blank" rel="noopener">https://github.com/hortonworks-spark/spark-atlas-connector/archive/master.zip</a></p>
+<p><strong>编译</strong>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mvn clean</span><br><span class="line">mvn package -DskipTests</span><br></pre></td></tr></table></figure>
+
+<p><strong>创建 atlas 中 spark 相关模块：</strong></p>
+<p>拷贝 <code>patch/1100-spark_model.json</code> 到 <code>$ATLAS_HOME/models/1000-Hadoop/</code> 下，然后重启 atlas 服务使之生效。</p>
+<p>将 配置 文件 atlas-application.properties 拷贝到 spark conf 下，同时 spark 需要能连接上hive hadoop等。</p>
+<p>启动 spark SQL 或者 spark shell 时，带上连接器的 jar 包。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin&#x2F;spark-sql --jars spark-atlas-connector-assembly-0.1.0-SNAPSHOT.jar --conf spark.extraListeners&#x3D;com.hortonworks.spark.atlas.SparkAtlasEventTracker --conf spark.sql.queryExecutionListeners&#x3D;com.hortonworks.spark.atlas.SparkAtlasEventTracker --conf spark.sql.streaming.streamingQueryListeners&#x3D;com.hortonworks.spark.atlas.SparkAtlasStreamingQueryEventTracker</span><br></pre></td></tr></table></figure>
+
+<p>此连接器，只能实现 insert 相关操作，并且生成的 atlas entities 是 spark process，而不是 hive process。所以几乎对追踪 hive 元数据没作用。</p>
+<p>所有就有接下来的转换思路，不用spark-sql，而是转为 使用 hive on spark。</p>
+<h4 id="Hive-on-Spark"><a href="#Hive-on-Spark" class="headerlink" title="Hive on Spark"></a>Hive on Spark</h4><p>hive on spark 与 spark-sql 操作过程正好相反。spark-sql 是在spark 中连接hive元数据，然后进行计算。而 hive on spark 是，hive 底层执行引擎由 MR 修改为 Spark。</p>
+<p>版本依赖：</p>
+<table>
+<thead>
+<tr>
+<th align="left">Hive Version</th>
+<th align="left">Spark Version</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">master</td>
+<td align="left">2.3.0</td>
+</tr>
+<tr>
+<td align="left">3.0.x</td>
+<td align="left">2.3.0</td>
+</tr>
+<tr>
+<td align="left">2.3.x</td>
+<td align="left">2.0.0</td>
+</tr>
+<tr>
+<td align="left">2.2.x</td>
+<td align="left">1.6.0</td>
+</tr>
+<tr>
+<td align="left">2.1.x</td>
+<td align="left">1.6.0</td>
+</tr>
+<tr>
+<td align="left">2.0.x</td>
+<td align="left">1.5.0</td>
+</tr>
+<tr>
+<td align="left">1.2.x</td>
+<td align="left">1.3.1</td>
+</tr>
+<tr>
+<td align="left">1.1.x</td>
+<td align="left">1.2.0</td>
+</tr>
+</tbody></table>
+<h4 id="spark-sql-监听器实现"><a href="#spark-sql-监听器实现" class="headerlink" title="spark-sql 监听器实现"></a>spark-sql 监听器实现</h4><p>原理：通过listener监听到spark-sql中的每一个sql，然后将sql放入到hive session中进行解析，然后引用atlas的hive hook包 进行 sql 关系的注入，drop 操作除外。</p>
+<p><em>（无法实现drop操作是因为，在spark-sql中，执行drop 后，hive metastore 中已经不存在需要drop的数据，当 hive session进行解析时会发现不存在，无法进行解析。）</em></p>
+<p>代码打包：（不同的hive环境需要替换掉jar包中的hive-site.xml）</p>
+<ul>
+<li><code>atlas-bridges-1.0-SNAPSHOT.jar</code> </li>
+<li><code>atlas-bridges-1.0-SNAPSHOT-jar-with-dependencies.jar</code> 。</li>
+</ul>
+<p>使用方法：将jar包放到 $SPARK_HOME/jars 目录下。</p>
+<ul>
+<li><p>对于 <code>atlas-bridges-1.0-SNAPSHOT.jar</code>  ，还需要在jars目录下创建 atlas-hive-hook 的相关包 的软链接</p>
+</li>
+<li><p>对于<code>atlas-bridges-1.0-SNAPSHOT-jar-with-dependencies.jar</code> ，只需要放入其包。</p>
+<p>然后在启动spark-sql时，加上监听器参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bin&#x2F;spark-sql --jars atlas-bridges-1.0-SNAPSHOT.jar  --conf spark.extraListeners&#x3D;com.eebbk.atlas.bridges.sparksql.AtlasMetadataListener</span><br><span class="line">  	</span><br><span class="line">bin&#x2F;spark-sql --conf spark.extraListeners&#x3D;com.eebbk.atlas.bridges.sparksql.AtlasMetadataListener</span><br></pre></td></tr></table></figure>
+
+
+
+
+</li>
+</ul>
+<p>listener：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">package com.eebbk.atlas.bridges.sparksql;</span><br><span class="line"></span><br><span class="line">import org.apache.log4j.Logger;</span><br><span class="line">import org.apache.spark.scheduler.SparkListener;</span><br><span class="line">import org.apache.spark.scheduler.SparkListenerJobEnd;</span><br><span class="line">import org.apache.spark.scheduler.SparkListenerJobStart;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">public class AtlasMetadataListener extends SparkListener &#123;</span><br><span class="line"></span><br><span class="line">    private static final Logger log &#x3D; Logger.getLogger(AtlasMetadataListener.class);</span><br><span class="line"></span><br><span class="line">    private String command;</span><br><span class="line">    private SparkSqlLineage sparkSqlLineage &#x3D; new SparkSqlLineage();</span><br><span class="line">    private Thread thread &#x3D; new Thread(sparkSqlLineage);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onJobEnd(SparkListenerJobEnd jobEnd) &#123;</span><br><span class="line">        if (thread.getState().compareTo(Thread.State.NEW)&#x3D;&#x3D;0)&#123;</span><br><span class="line">            thread.start();</span><br><span class="line">        &#125;</span><br><span class="line">        if (!command.toLowerCase().startsWith(&quot;drop&quot;))&#123;</span><br><span class="line">            log.info(&quot;send command to sparkSqlLineage:  &quot;+command);</span><br><span class="line">            sparkSqlLineage.addCommand(command);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            log.info(&quot;drop operator is not support in spark-sql for apache atlas!&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onJobStart(SparkListenerJobStart jobStart) &#123;</span><br><span class="line">        Object jobDesc &#x3D; jobStart.properties().get(&quot;spark.job.description&quot;);</span><br><span class="line">        command  &#x3D; jobDesc.toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>sqlLineage:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br></pre></td><td class="code"><pre><span class="line">package com.eebbk.atlas.bridges.sparksql;</span><br><span class="line"></span><br><span class="line">import org.apache.atlas.hive.hook.HiveHook;</span><br><span class="line">import org.apache.hadoop.hive.common.ValidTxnList;</span><br><span class="line">import org.apache.hadoop.hive.conf.HiveConf;</span><br><span class="line">import org.apache.hadoop.hive.ql.Context;</span><br><span class="line">import org.apache.hadoop.hive.ql.QueryPlan;</span><br><span class="line">import org.apache.hadoop.hive.ql.hooks.Hook;</span><br><span class="line">import org.apache.hadoop.hive.ql.hooks.HookContext;</span><br><span class="line">import org.apache.hadoop.hive.ql.hooks.HookUtils;</span><br><span class="line">import org.apache.hadoop.hive.ql.lockmgr.LockException;</span><br><span class="line">import org.apache.hadoop.hive.ql.parse.*;</span><br><span class="line">import org.apache.hadoop.hive.ql.session.SessionState;</span><br><span class="line">import org.apache.log4j.Logger;</span><br><span class="line"></span><br><span class="line">import java.io.IOException;</span><br><span class="line">import java.util.List;</span><br><span class="line">import java.util.concurrent.LinkedBlockingQueue;</span><br><span class="line"></span><br><span class="line">public class SparkSqlLineage implements Runnable&#123;</span><br><span class="line"></span><br><span class="line">    private static final Logger log &#x3D; Logger.getLogger(SparkSqlLineage.class);</span><br><span class="line"></span><br><span class="line">    private final LinkedBlockingQueue&lt;String&gt; sqlQueue &#x3D; new LinkedBlockingQueue&lt;&gt;(100);</span><br><span class="line"></span><br><span class="line">    private HiveConf     hiveConf &#x3D; null;</span><br><span class="line">    private ParseDriver  pd       &#x3D; null;</span><br><span class="line">    private Context      context  &#x3D; null;</span><br><span class="line">    private SessionState ss       &#x3D; null;</span><br><span class="line">    private String       queryStr &#x3D; null;</span><br><span class="line">    private String       command  &#x3D; null;</span><br><span class="line"></span><br><span class="line">    public void addCommand(String command)&#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            sqlQueue.put(command);</span><br><span class="line">        &#125; catch (InterruptedException e) &#123;</span><br><span class="line">            log.error(&quot;put command to queue fail. &quot;,e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line"></span><br><span class="line">        while (true)&#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                command &#x3D; sqlQueue.take();</span><br><span class="line">            &#125; catch (InterruptedException e) &#123;</span><br><span class="line">                log.error(&quot;get sql command fail.&quot; + e );</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            if (command&#x3D;&#x3D;null||command.equals(&quot;end&quot;))&#123;</span><br><span class="line">                log.info(&quot;process sql thread end !&quot;);</span><br><span class="line">                break;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            if (ss&#x3D;&#x3D;null)&#123;</span><br><span class="line">                initSessionState();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            String queryId &#x3D; QueryPlan.makeQueryId();</span><br><span class="line"></span><br><span class="line">            command &#x3D; new VariableSubstitution().substitute(hiveConf, command);</span><br><span class="line"></span><br><span class="line">            if (context &#x3D;&#x3D; null)&#123;</span><br><span class="line">                initContext();</span><br><span class="line">            &#125;</span><br><span class="line">            context.setCmd(command);</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; get tree</span><br><span class="line">            ASTNode tree &#x3D; getTree(command);</span><br><span class="line"></span><br><span class="line">            dealSessionState();</span><br><span class="line"></span><br><span class="line">            try &#123;</span><br><span class="line">                queryStr &#x3D; HookUtils.redactLogString(hiveConf, command);</span><br><span class="line">                hiveConf.set(&quot;mapreduce.workflow.name&quot;, queryStr);</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                log.error(&quot;get queryStr fail.&quot; + e);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; get sem</span><br><span class="line">            BaseSemanticAnalyzer sem &#x3D; null;</span><br><span class="line">            try &#123;</span><br><span class="line">                sem &#x3D; SemanticAnalyzerFactory.get(hiveConf, tree);</span><br><span class="line">                sem.analyze(tree, context);</span><br><span class="line">                log.info(&quot;Semantic Analysis Completed&quot;);</span><br><span class="line">                sem.validate();</span><br><span class="line">            &#125; catch (SemanticException e) &#123;</span><br><span class="line">                log.error(&quot;init sem fail.&quot;+ e );</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; get query plan</span><br><span class="line">            if (sem &#x3D;&#x3D; null)&#123;</span><br><span class="line">                break;</span><br><span class="line">            &#125;</span><br><span class="line">            QueryPlan plan &#x3D; new QueryPlan(queryStr, sem, System.currentTimeMillis(), queryId, ss.getCommandType());</span><br><span class="line"></span><br><span class="line">            &#x2F;&#x2F; HookContext</span><br><span class="line">            HookContext hookContext &#x3D; null;</span><br><span class="line">            try &#123;</span><br><span class="line">                hookContext &#x3D; new HookContext(plan, hiveConf, context.getPathToCS(), ss.getUserName(), ss.getUserIpAddress(), queryId);</span><br><span class="line">                hookContext.setHookType(HookContext.HookType.POST_EXEC_HOOK);</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                log.error(&quot;get hookContext fail.&quot; + e);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            List&lt;Hook&gt; hookList;</span><br><span class="line">            try &#123;</span><br><span class="line">                hookList &#x3D; HookUtils.getHooks(hiveConf, HiveConf.ConfVars.POSTEXECHOOKS, Hook.class);</span><br><span class="line">                for (Hook hook:hookList)&#123;</span><br><span class="line">                    if (hook instanceof HiveHook)&#123;</span><br><span class="line">                        ((HiveHook) hook).run(hookContext);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                log.error(&quot;run hook fail.&quot;+ e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initSessionState()&#123;</span><br><span class="line">        SessionState sessionState &#x3D; new SessionState(hiveConf &#x3D;&#x3D; null ? initHiveConf() : hiveConf);</span><br><span class="line">        SessionState.start(sessionState);</span><br><span class="line">        this.ss &#x3D; SessionState.get();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private HiveConf initHiveConf()&#123;</span><br><span class="line">        this.hiveConf &#x3D; new HiveConf();</span><br><span class="line">        return hiveConf;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initContext() &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            this.context &#x3D; new Context(hiveConf);</span><br><span class="line">            context.setTryCount(Integer.MAX_VALUE);</span><br><span class="line">            context.setHDFSCleanup(true);</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            log.error(&quot;init context fail.&quot; + e );</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initParseDriver()&#123;</span><br><span class="line">        this.pd &#x3D; new ParseDriver();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private ASTNode getTree(String command)&#123;</span><br><span class="line">        ASTNode tree &#x3D; null;</span><br><span class="line">        if (pd &#x3D;&#x3D;null)&#123;</span><br><span class="line">            initParseDriver();</span><br><span class="line">        &#125;</span><br><span class="line">        try &#123;</span><br><span class="line">            tree &#x3D; pd.parse(command, context);</span><br><span class="line">            tree &#x3D; ParseUtils.findRootNonNullToken(tree);</span><br><span class="line">            log.info(&quot;parse command to tree success.&quot;);</span><br><span class="line">        &#125; catch (ParseException e) &#123;</span><br><span class="line">            log.error(&quot;parse command to tree fail. &quot; + e);</span><br><span class="line">        &#125;</span><br><span class="line">        return tree;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void dealSessionState()&#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            ss.initTxnMgr(hiveConf);</span><br><span class="line">            ValidTxnList txns &#x3D; ss.getTxnMgr().getValidTxns();</span><br><span class="line">            String txnStr &#x3D; txns.toString();</span><br><span class="line">            hiveConf.set(ValidTxnList.VALID_TXNS_KEY, txnStr);</span><br><span class="line">        &#125; catch (LockException e) &#123;</span><br><span class="line">            log.error(&quot;deal SessionState fail.&quot; + e );</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Apache/" rel="tag"># Apache</a>
+          
+            <a href="/tags/Atlas/" rel="tag"># Atlas</a>
+          
+            <a href="/tags/Hbase/" rel="tag"># Hbase</a>
+          
+            <a href="/tags/Kafka/" rel="tag"># Kafka</a>
+          
+            <a href="/tags/Hive/" rel="tag"># Hive</a>
+          
+            <a href="/tags/Spark-sql/" rel="tag"># Spark-sql</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/01/Apache-Atlas/02.%E5%AE%89%E8%A3%85%E9%83%A8%E7%BD%B2/" rel="next" title="atlas安装部署">
+                <i class="fa fa-chevron-left"></i> atlas安装部署
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/07/03/Apache-Atlas/09.%E5%90%8E%E7%BB%AD%E8%AE%A1%E5%88%92/" rel="prev" title="atlas后续计划">
+                atlas后续计划 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/blog.jpg"
+               alt="Roman" />
+          <p class="site-author-name" itemprop="name">Roman</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">54</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Atlas-Hook"><span class="nav-number">1.</span> <span class="nav-text">Atlas Hook</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Hive-Hook"><span class="nav-number">1.1.</span> <span class="nav-text">Hive Hook</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#批量导入-hive-元数据"><span class="nav-number">1.1.0.1.</span> <span class="nav-text">批量导入 hive 元数据</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#hook-跟踪"><span class="nav-number">1.1.0.2.</span> <span class="nav-text">hook 跟踪</span></a></li></ol></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Kafka-Hook"><span class="nav-number">1.2.</span> <span class="nav-text">Kafka Hook</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HBase-Hook"><span class="nav-number">1.3.</span> <span class="nav-text">HBase Hook</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Spark-Atlas-Connector"><span class="nav-number">1.4.</span> <span class="nav-text">Spark-Atlas-Connector</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hive-on-Spark"><span class="nav-number">1.5.</span> <span class="nav-text">Hive on Spark</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#spark-sql-监听器实现"><span class="nav-number">1.6.</span> <span class="nav-text">spark-sql 监听器实现</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Roman</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next" target="_blank" rel="noopener">
+    NexT.Gemini
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

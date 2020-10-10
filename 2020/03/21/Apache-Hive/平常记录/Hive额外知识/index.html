@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Apache,Hive," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="hive四种存储格式介绍与分析比较1、TestFile  TextFile文件不支持块压缩，默认格式，数据不做压缩，磁盘开销大，数据解析开销大。这边不做深入介绍。 2、RCFile  Record Columnar的缩写。是Hadoop中第一个列文件格式。能够很好的压缩和快速的查询性能，但是不支持模式演进。通常写操作比较慢，比非列形式的文件格式需要更多的内存空间和计算量。 RCFile是一种行列存">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hive额外知识">
+<meta property="og:url" content="https://romandata.github.io/2020/03/21/Apache-Hive/%E5%B9%B3%E5%B8%B8%E8%AE%B0%E5%BD%95/Hive%E9%A2%9D%E5%A4%96%E7%9F%A5%E8%AF%86/index.html">
+<meta property="og:site_name" content="Roman&#39;s Data">
+<meta property="og:description" content="hive四种存储格式介绍与分析比较1、TestFile  TextFile文件不支持块压缩，默认格式，数据不做压缩，磁盘开销大，数据解析开销大。这边不做深入介绍。 2、RCFile  Record Columnar的缩写。是Hadoop中第一个列文件格式。能够很好的压缩和快速的查询性能，但是不支持模式演进。通常写操作比较慢，比非列形式的文件格式需要更多的内存空间和计算量。 RCFile是一种行列存">
+<meta property="og:image" content="f:%5CmyGit%5CDT-Learner%5CApache-Hive%5C%E5%B9%B3%E5%B8%B8%E8%AE%B0%E5%BD%95%5Cimage-20200623154537087.png">
+<meta property="article:published_time" content="2020-03-21T12:31:22.000Z">
+<meta property="article:modified_time" content="2020-10-10T16:55:19.692Z">
+<meta property="article:author" content="Roman">
+<meta property="article:tag" content="Apache">
+<meta property="article:tag" content="Hive">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="f:%5CmyGit%5CDT-Learner%5CApache-Hive%5C%E5%B9%B3%E5%B8%B8%E8%AE%B0%E5%BD%95%5Cimage-20200623154537087.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    sidebar: {"position":"left","display":"post","offset":6,"offset_float":6,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://romandata.github.io/2020/03/21/Apache-Hive/平常记录/Hive额外知识/"/>
+
+
+
+
+
+  <title>Hive额外知识 | Roman's Data</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Roman's Data</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">铁马冰河入梦来</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-sitemap">
+          <a href="/sitemap.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br />
+            
+            站点地图
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://romandata.github.io/2020/03/21/Apache-Hive/%E5%B9%B3%E5%B8%B8%E8%AE%B0%E5%BD%95/Hive%E9%A2%9D%E5%A4%96%E7%9F%A5%E8%AF%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Roman">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/blog.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Roman's Data">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Hive额外知识</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-21T20:31:22+08:00">
+                2020-03-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Hive/" itemprop="url" rel="index">
+                    <span itemprop="name">Apache-Hive</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Hive/%E5%B9%B3%E5%B8%B8%E8%AE%B0%E5%BD%95/" itemprop="url" rel="index">
+                    <span itemprop="name">平常记录</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h4 id="hive四种存储格式介绍与分析比较"><a href="#hive四种存储格式介绍与分析比较" class="headerlink" title="hive四种存储格式介绍与分析比较"></a><strong>hive四种存储格式介绍与分析比较</strong></h4><p>1、TestFile</p>
+<p> TextFile文件不支持块压缩，默认格式，数据不做压缩，磁盘开销大，数据解析开销大。这边不做深入介绍。</p>
+<p>2、RCFile</p>
+<p> Record Columnar的缩写。是Hadoop中第一个列文件格式。能够很好的压缩和快速的查询性能，但是不支持模式演进。通常写操作比较慢，比非列形式的文件格式需要更多的内存空间和计算量。</p>
+<p>RCFile是一种行列存储相结合的存储方式。首先，其将数据按行分块，保证同一个record在一个块上，避免读一个记录需要读取多个block。其次，块数据列式存储，有利于数据压缩和快速的列存取。</p>
+<p>3、ORCFile</p>
+<p>存储方式：数据按行分块每块按照列存储，压缩快，快速列存取，效率比rcfile高，是 rcfile 的改良版本，相比RC能够更好的压缩，能够更快的查询，但还是不支持模式演进。</p>
+<p>4、Parquet</p>
+<p>Parquet能够很好的压缩，有很好的查询性能，支持有限的模式演进。但是写速度通常比较慢。这中文件格式主要是用在Cloudera Impala上面的。</p>
+<h4 id="压缩算法比较"><a href="#压缩算法比较" class="headerlink" title="压缩算法比较"></a><strong>压缩算法比较</strong></h4><p>1、gzip压缩</p>
+<p>优点：压缩率比较高，而且压缩/解压速度也比较快；hadoop本身支持，在应用中处理gzip格式的文件就和直接处理文本一样；有hadoop native库；大部分linux系统都自带gzip命令，使用方便。</p>
+<p>缺点：不支持split。</p>
+<p>应用场景：当每个文件压缩之后在130M以内的（1个块大小内），都可以考虑用gzip压缩格式。譬如说一天或者一个小时的日志压缩成一个gzip文件，运行mapreduce程序的时候通过多个gzip文件达到并发。hive程序，streaming程序，和java写的mapreduce程序完全和文本处理一样，压缩之后原来的程序不需要做任何修改。</p>
+<p>2、lzo压缩</p>
+<p>优点：压缩/解压速度也比较快，合理的压缩率；支持split，是hadoop中最流行的压缩格式；支持hadoop native库；可以在linux系统下安装lzop命令，使用方便。</p>
+<p>缺点：压缩率比gzip要低一些；hadoop本身不支持，需要安装；在应用中对lzo格式的文件需要做一些特殊处理（为了支持split需要建索引，还需要指定inputformat为lzo格式）。</p>
+<p>应用场景：一个很大的文本文件，压缩之后还大于200M以上的可以考虑，而且单个文件越大，lzo优点越越明显。</p>
+<p>3、snappy压缩</p>
+<p>优点：高速压缩速度和合理的压缩率；支持hadoop native库。</p>
+<p>缺点：不支持split；压缩率比gzip要低；hadoop本身不支持，需要安装；linux系统下没有对应的命令。</p>
+<p>应用场景：当mapreduce作业的map输出的数据比较大的时候，作为map到reduce的中间数据的压缩格式；或者作为一个mapreduce作业的输出和另外一个mapreduce作业的输入。</p>
+<p>4、bzip2压缩</p>
+<p>优点：支持split；具有很高的压缩率，比gzip压缩率都高；hadoop本身支持，但不支持native；在linux系统下自带bzip2命令，使用方便。</p>
+<p>缺点：压缩/解压速度慢；不支持native。</p>
+<p>应用场景：适合对速度要求不高，但需要较高的压缩率的时候，可以作为mapreduce作业的输出格式；或者输出之后的数据比较大，处理之后的数据需要压缩存档减少磁盘空间并且以后数据用得比较少的情况；或者对单个很大的文本文件想压缩减少存储空间，同时又需要支持split，而且兼容之前的应用程序（即应用程序不需要修改）的情况。</p>
+<p>最后用一个表格比较上述4种压缩格式的特征（优缺点）：</p>
+<p><img src="F:%5CmyGit%5CDT-Learner%5CApache-Hive%5C%E5%B9%B3%E5%B8%B8%E8%AE%B0%E5%BD%95%5Cimage-20200623154537087.png" alt="image-20200623154537087"></p>
+<p>注意：以上几种压缩算法都是在压缩普通文本的前提下来说的是否支持split，如果是RCFile、Sequence Files等，本身就支持split，经过压缩之后一样是支持split的。</p>
+<p>综上，我们hadoop2.4集群要求RCFile+gzip是有一定道理的，首先RCFile格式的文件支持按列存储，同时支持split，而gzip的压缩率比较高，而且压缩/解压速度也比较快，所以RCFile格式的文件经过gzip压缩后既能保证文件能split，还能保证很高压缩/解压速度和压缩比。</p>
+<h4 id="Hive和RDBMS的区别"><a href="#Hive和RDBMS的区别" class="headerlink" title="Hive和RDBMS的区别"></a><strong>Hive和RDBMS的区别</strong></h4><p>1.查询语言：HSQL为类SQL，可以进行一般的查询。没有SQL灵活好用</p>
+<p>2.Hive数据在HDFS，而RDBMS数据在块设备或者本地文件系统</p>
+<p>3.Hive通常不能进行update和delete（高版本可以开启ACID，需要ORC等等条件），RDBMS可以</p>
+<p>4.Hive是MR计算，RDBMS有自己的计算引擎</p>
+<p>5.Hive执行延迟高，适合大批量离线处理；RDBMS延迟低，大批量数据处理性能下降明显</p>
+<p>6.Hive底层是HDFS，几千上万台；RDBMS受限，几百台</p>
+<h4 id="order-by，sort-by，clustered-by，distribute-by"><a href="#order-by，sort-by，clustered-by，distribute-by" class="headerlink" title="order by，sort by，clustered by，distribute by"></a><strong>order by，sort by，clustered by，distribute by</strong></h4><p>order by：全局排序，一个reduce</p>
+<p>sort by  ：每个reduce端排序，局部有序；优点：做完sort by 再做全局排序能提高效率；</p>
+<p>distribute by：经常和sort by 搭配。先distribute by，相同的数据到相同的reduce（partition）再做sort by;</p>
+<p>cluster by：等价于distribute by和sort by一起使用，但是cluster by只能降序</p>
+<h4 id="Hive-Join分类"><a href="#Hive-Join分类" class="headerlink" title="Hive Join分类"></a><strong>Hive Join分类</strong></h4><p>reduce join：inner join，left join，right join，full join，cross join（笛卡尔积）</p>
+<p>map join：小表对大表，hive.mapjoin.smalltable.filesize=25000000</p>
+<p>sort-merge-bucket join：大表 join 大表，后台会创建两张参与join的表，并分区分桶排序。    clustered by  sort by </p>
+<h4 id="hive小文件问题"><a href="#hive小文件问题" class="headerlink" title="hive小文件问题"></a><strong>hive小文件问题</strong></h4><p>影响：NameNode 性能，MapReduce任务缓慢(小文件会增加MapTask)；无数据倾斜，小表关联任务太慢</p>
+<p>解决：合理的文件格式(sequence file 比text file好)；</p>
+<p>​    控制Reduce数量；</p>
+<p>​    少用动态分区，用时记得distribute by分区；</p>
+<p>hive.merg.mapfiles=true：合并map输出</p>
+<p>hive.merge.mapredfiles=false：合并reduce输出</p>
+<p>hive.merge.size.per.task=256<em>1000</em>1000：合并文件的大小</p>
+<p>hive.mergejob.maponly=true：如果支持CombineHiveInputFormat则生成只有Map的任务执行merge</p>
+<p>hive.merge.smallfiles.avgsize=16000000：文件的平均大小小于该值时，会启动一个MR任务执行merge。</p>
+<p>已有的小文件：HAR归档；重建表，设置合理的reduce数；</p>
+<h4 id="数据倾斜"><a href="#数据倾斜" class="headerlink" title="数据倾斜"></a><strong>数据倾斜</strong></h4><p>表现：任务长时间卡在99%，某些任务时间远大于其他任务平均时间</p>
+<p>原因：1.key分布不均匀，导致join时部分key集中在几个reduce上</p>
+<p>​           2.count(distinct )  特殊值过多</p>
+<p>​           3.数据业务本身特点</p>
+<p>​           4.Hive SQL存在数据倾斜</p>
+<p>解决：1.空值产生的数据倾斜 – &gt;  1️⃣ 空值数据单独管理，之后union   2️⃣ 空值赋值 特定值+随机数</p>
+<p>​           2.设置hive.map.aggr = true map端部分聚合，相当于Combiner</p>
+<p>​           3.count(distinct )   特殊值类型不多，可以单独计算，再union；或者先group by，再做sum</p>
+<p>​           4.不同的数据类型关联，需要先转换为相同的数据类型</p>
+<p>​           5.map join</p>
+<p>​           6.大表对大表，将倾斜的key通过采样得出，将倾斜的key的数据单独拿出来做mapjoin，最后union</p>
+<p>​    \7. hive.groupby.skewindata=true控制生成两个MR Job  第一个MRJob 中，Map的输出结果集合会随机分布到Reduce中，每个Reduce做部分聚合操作，并输出结果，这样处理的结果是相同的GroupBy Key有可能被分发到不同的Reduce中，从而达到负载均衡的目的；第二个MRJob再根据预处理的数据结果按照GroupBy Key分布到Reduce中（这个过程可以保证相同的GroupBy Key被分布到同一个Reduce中），最后完成最终的聚合操作。</p>
+<h4 id="hiveSQL转化为MapReduce任务的过程"><a href="#hiveSQL转化为MapReduce任务的过程" class="headerlink" title="hiveSQL转化为MapReduce任务的过程"></a><strong>hiveSQL转化为MapReduce任务的过程</strong></h4><ul>
+<li>Antlr定义SQL的语法规则，完成SQL词法，语法解析，将SQL转化为抽象语法树AST Tree</li>
+<li>遍历AST Tree，抽象出查询的基本组成单元QueryBlock</li>
+<li>遍历QueryBlock，翻译为执行操作树OperatorTree</li>
+<li>逻辑层优化器进行OperatorTree变换，合并不必要的ReduceSinkOperator，减少shuffle数据量</li>
+<li>遍历OperatorTree，翻译为MapReduce任务</li>
+<li>物理层优化器进行MapReduce任务的变换，生成最终的执行计划</li>
+</ul>
+<h4 id="Hive目录下的-开头的数据不会被读取。"><a href="#Hive目录下的-开头的数据不会被读取。" class="headerlink" title="Hive目录下的.开头的数据不会被读取。"></a><strong>Hive目录下的.开头的数据不会被读取。</strong></h4><p>Java 写 parquet 文件时注意小文件问题，以及未关闭的文件无法被读取。需要定期合并小文件，并且在任务重启或者消费者rebanlance时需要删除未正常关闭的文件。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Apache/" rel="tag"># Apache</a>
+          
+            <a href="/tags/Hive/" rel="tag"># Hive</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/11/Apache-Hadoop/Hadoop%E5%B9%B3%E5%B8%B8%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95/" rel="next" title="Hadoop平常问题记录">
+                <i class="fa fa-chevron-left"></i> Hadoop平常问题记录
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/28/Apache-Hive/%E5%B9%B3%E5%B8%B8%E8%AE%B0%E5%BD%95/Hive%E4%B8%AD%E6%96%87%E4%B9%B1%E7%A0%81%E9%97%AE%E9%A2%98/" rel="prev" title="Hive中文乱码问题">
+                Hive中文乱码问题 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/blog.jpg"
+               alt="Roman" />
+          <p class="site-author-name" itemprop="name">Roman</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">54</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#hive四种存储格式介绍与分析比较"><span class="nav-number">1.</span> <span class="nav-text">hive四种存储格式介绍与分析比较</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#压缩算法比较"><span class="nav-number">2.</span> <span class="nav-text">压缩算法比较</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hive和RDBMS的区别"><span class="nav-number">3.</span> <span class="nav-text">Hive和RDBMS的区别</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#order-by，sort-by，clustered-by，distribute-by"><span class="nav-number">4.</span> <span class="nav-text">order by，sort by，clustered by，distribute by</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hive-Join分类"><span class="nav-number">5.</span> <span class="nav-text">Hive Join分类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#hive小文件问题"><span class="nav-number">6.</span> <span class="nav-text">hive小文件问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数据倾斜"><span class="nav-number">7.</span> <span class="nav-text">数据倾斜</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#hiveSQL转化为MapReduce任务的过程"><span class="nav-number">8.</span> <span class="nav-text">hiveSQL转化为MapReduce任务的过程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hive目录下的-开头的数据不会被读取。"><span class="nav-number">9.</span> <span class="nav-text">Hive目录下的.开头的数据不会被读取。</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Roman</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next" target="_blank" rel="noopener">
+    NexT.Gemini
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

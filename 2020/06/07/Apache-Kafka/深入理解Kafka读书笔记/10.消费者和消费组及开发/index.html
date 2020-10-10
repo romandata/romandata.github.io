@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Apache,Kafka,读书笔记," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="消费消费者和消费组对于每一个消费者 Consumer 而言，都有其对应的消费组 Consumer Group。每条消息都只会发送到每个消费组中的一个消费者。消费者数量不应该大于 Topic 分区数量，否则会有消费者消费不到消息的情况。 客户端开发和生产者类似，一个完整的消费逻辑如下：  配置消费者 Consumer 参数以及创建相应的消费者实例 消费者订阅 Topic 消费者拉取消息进行消费 消费">
+<meta property="og:type" content="article">
+<meta property="og:title" content="消费者和消费组">
+<meta property="og:url" content="https://romandata.github.io/2020/06/07/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/10.%E6%B6%88%E8%B4%B9%E8%80%85%E5%92%8C%E6%B6%88%E8%B4%B9%E7%BB%84%E5%8F%8A%E5%BC%80%E5%8F%91/index.html">
+<meta property="og:site_name" content="Roman&#39;s Data">
+<meta property="og:description" content="消费消费者和消费组对于每一个消费者 Consumer 而言，都有其对应的消费组 Consumer Group。每条消息都只会发送到每个消费组中的一个消费者。消费者数量不应该大于 Topic 分区数量，否则会有消费者消费不到消息的情况。 客户端开发和生产者类似，一个完整的消费逻辑如下：  配置消费者 Consumer 参数以及创建相应的消费者实例 消费者订阅 Topic 消费者拉取消息进行消费 消费">
+<meta property="article:published_time" content="2020-06-07T13:44:02.000Z">
+<meta property="article:modified_time" content="2020-10-10T16:56:05.349Z">
+<meta property="article:author" content="Roman">
+<meta property="article:tag" content="Apache">
+<meta property="article:tag" content="Kafka">
+<meta property="article:tag" content="读书笔记">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    sidebar: {"position":"left","display":"post","offset":6,"offset_float":6,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://romandata.github.io/2020/06/07/Apache-Kafka/深入理解Kafka读书笔记/10.消费者和消费组及开发/"/>
+
+
+
+
+
+  <title>消费者和消费组 | Roman's Data</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Roman's Data</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">铁马冰河入梦来</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-sitemap">
+          <a href="/sitemap.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br />
+            
+            站点地图
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://romandata.github.io/2020/06/07/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/10.%E6%B6%88%E8%B4%B9%E8%80%85%E5%92%8C%E6%B6%88%E8%B4%B9%E7%BB%84%E5%8F%8A%E5%BC%80%E5%8F%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Roman">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/blog.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Roman's Data">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">消费者和消费组</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-07T21:44:02+08:00">
+                2020-06-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Kafka/" itemprop="url" rel="index">
+                    <span itemprop="name">Apache-Kafka</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index">
+                    <span itemprop="name">深入理解Kafka读书笔记</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="消费"><a href="#消费" class="headerlink" title="消费"></a>消费</h3><h6 id="消费者和消费组"><a href="#消费者和消费组" class="headerlink" title="消费者和消费组"></a>消费者和消费组</h6><p>对于每一个消费者 <code>Consumer</code> 而言，都有其对应的消费组 <code>Consumer Group</code>。每条消息都只会发送到每个消费组中的一个消费者。消费者数量不应该大于 <code>Topic</code> 分区数量，否则会有消费者消费不到消息的情况。</p>
+<h6 id="客户端开发"><a href="#客户端开发" class="headerlink" title="客户端开发"></a>客户端开发</h6><p>和生产者类似，一个完整的消费逻辑如下：</p>
+<ol>
+<li>配置消费者 <code>Consumer</code> 参数以及创建相应的消费者实例</li>
+<li>消费者订阅 <code>Topic</code></li>
+<li>消费者拉取消息进行消费</li>
+<li>消费者提交 <code>offset</code></li>
+<li>关闭消费者实例</li>
+</ol>
+<p>先来看一个简单的 <code>Consumer demo</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> kafka.consumer;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.kafka.clients.consumer.ConsumerConfig;</span><br><span class="line"><span class="keyword">import</span> org.apache.kafka.clients.consumer.ConsumerRecord;</span><br><span class="line"><span class="keyword">import</span> org.apache.kafka.clients.consumer.ConsumerRecords;</span><br><span class="line"><span class="keyword">import</span> org.apache.kafka.clients.consumer.KafkaConsumer;</span><br><span class="line"><span class="keyword">import</span> org.apache.kafka.common.serialization.StringDeserializer;</span><br><span class="line"><span class="keyword">import</span> org.slf4j.Logger;</span><br><span class="line"><span class="keyword">import</span> org.slf4j.LoggerFactory;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.Arrays;</span><br><span class="line"><span class="keyword">import</span> java.util.Properties;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyConsumer</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger LOG = LoggerFactory.getLogger(MyConsumer<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 参数初始化</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> Properties <span class="title">initConfig</span><span class="params">(String brokerList, String groupID, String clientID)</span></span>&#123;</span><br><span class="line"></span><br><span class="line">        Properties prop = <span class="keyword">new</span> Properties();</span><br><span class="line">        prop.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer<span class="class">.<span class="keyword">class</span>.<span class="title">getName</span>())</span>;    <span class="comment">// key 反序列化</span></span><br><span class="line">        prop.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer<span class="class">.<span class="keyword">class</span>.<span class="title">getName</span>())</span>;  <span class="comment">// value 反序列化</span></span><br><span class="line">        prop.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,brokerList);   <span class="comment">// Kafka 服务</span></span><br><span class="line">        prop.put(ConsumerConfig.GROUP_ID_CONFIG, groupID);    <span class="comment">// Consumer Group</span></span><br><span class="line">        prop.put(ConsumerConfig.CLIENT_ID_CONFIG, clientID);    <span class="comment">// client id</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> prop;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// consumer基本信息</span></span><br><span class="line">        String topic = <span class="string">"TEST-TOPIC"</span>;</span><br><span class="line">        String brokerList = <span class="string">"tnode1:9092"</span>;</span><br><span class="line">        String groupID = <span class="string">"group.demo"</span>;</span><br><span class="line">        String clientID = <span class="string">"consumer.client.id.demo"</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化配置</span></span><br><span class="line">        Properties prop = initConfig(brokerList, groupID, clientID);</span><br><span class="line">        <span class="comment">// 生产 Consumer 实例</span></span><br><span class="line">        KafkaConsumer&lt;String, String&gt; kafkaConsumer = <span class="keyword">new</span> KafkaConsumer&lt;&gt;(prop);</span><br><span class="line">        <span class="comment">// 订阅指定的 TOPIC，可以多个，组装成 List 就行。</span></span><br><span class="line">        kafkaConsumer.subscribe(Arrays.asList(topic));</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 持续不断消费数据</span></span><br><span class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>)&#123;</span><br><span class="line">                <span class="comment">// 每隔 1 秒拉取一批数据</span></span><br><span class="line">                ConsumerRecords&lt;String, String&gt; records = kafkaConsumer.poll(<span class="number">1000</span>);</span><br><span class="line">                <span class="comment">// 遍历拉取的消息集 </span></span><br><span class="line">                <span class="keyword">for</span> (ConsumerRecord&lt;String, String&gt; record:records)&#123;</span><br><span class="line">                    <span class="comment">// 打印每条消息的topic、partition、offset、key、value</span></span><br><span class="line">                    LOG.info(record.topic()+<span class="string">":"</span>+record.partition()+<span class="string">":"</span>+record.offset()+<span class="string">" ::: "</span>+record.key()+<span class="string">":"</span>+record.value());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e)&#123;</span><br><span class="line">            LOG.error(<span class="string">""</span>, e);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="comment">// 关闭消费者</span></span><br><span class="line">            kafkaConsumer.close();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h6 id="配置消费者-Consumer-参数以及创建相应的消费者实例"><a href="#配置消费者-Consumer-参数以及创建相应的消费者实例" class="headerlink" title="配置消费者 Consumer 参数以及创建相应的消费者实例"></a>配置消费者 Consumer 参数以及创建相应的消费者实例</h6><p>参考上面代码，类比 生产者 <code>Producer</code> 的配置，这边配置也类似，只不过多了一个 <code>group id</code> 即 <code>Consumer Group</code> 的配置，其他配置都类似，不再赘述。</p>
+<p>额外提一点，<code>KafkaProducer</code> 和 <code>KafkaConsumer</code> 都有两个构造方法，第一个都是直接加载 参数的，即我们代码中使用的；第二个是 加载参数和 序列化反序列化器的。因为我们一般都在参数中设置序列化和反序列化器，所以常用的构造方法都是第一种，第二种不怎么用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">KafkaConsumer</span><span class="params">(Map&lt;String, Object&gt; configs)</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">KafkaConsumer</span><span class="params">(Map&lt;String, Object&gt; configs, Deserializer&lt;K&gt; keyDeserializer, Deserializer&lt;V&gt; valueDeserializer)</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">KafkaConsumer</span><span class="params">(Properties properties)</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">KafkaConsumer</span><span class="params">(Properties properties, Deserializer&lt;K&gt; keyDeserializer, Deserializer&lt;V&gt; valueDeserializer)</span></span></span><br><span class="line"><span class="function"><span class="comment">// 最终的调用</span></span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">KafkaConsumer</span><span class="params">(ConsumerConfig config, Deserializer&lt;K&gt; keyDeserializer, Deserializer&lt;V&gt; valueDeserializer)</span></span></span><br></pre></td></tr></table></figure>
+
+
+
+<h6 id="消费者订阅-Topic"><a href="#消费者订阅-Topic" class="headerlink" title="消费者订阅 Topic"></a>消费者订阅 Topic</h6><p><code>kafkaConsumer</code> 订阅消息有两种类型：</p>
+<ul>
+<li><p><code>subscribe</code> 直接订阅 Topic，可直接指定 <code>Topic</code> 集合，也可使用正则表达式。如果不指定 <code>ReBalanceListener</code> ，则使用默认的 <code>ReBalanceListener</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">subscribe</span><span class="params">(Pattern pattern, ConsumerRebalanceListener listener)</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">subscribe</span><span class="params">(Collection&lt;String&gt; topics, ConsumerRebalanceListener listener)</span></span></span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><p>对于使用集合方式订阅 <code>topic</code> 的，”后发制人”，即最后订阅有效，前面的不生效。如 </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kafkaConsumer.subscribe(Arrays.asList(<span class="string">"topic1"</span>));</span><br><span class="line">kafkaConsumer.subscribe(Arrays.asList(<span class="string">"topic2"</span>));</span><br></pre></td></tr></table></figure>
+
+<p>最终消费订阅的是 <code>topic2</code></p>
+</li>
+<li><p>对于使用 正则表达式的 方式订阅 <code>topic</code>的，符合正则表达式的所有 <code>topic</code> 都会被消费，无论此 topic是在消费程序启动之前创建还是消费程序启动之后创建的。前期的版本，使用正则时，必须显示指定<code>ReBalanceListener</code> 。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kafkaConsumer.subscribe(Pattern.compile(<span class="string">"topic-.*"</span>));</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+</li>
+<li><p><code>assign</code> 订阅指定分区，参数为 <code>TopicPartition</code> 的集合。另外，<strong>这种消费方式不能自动 rebanlance</strong>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">assign</span><span class="params">(Collection&lt;TopicPartition&gt; partitions)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>先看以下 <code>TopicPartition</code> 类。主要属性就两个，一个 <code>topic</code>，一个 <code>partition</code>。作用就是映射 <code>topic-partition</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">TopicPartition</span> <span class="keyword">implements</span> <span class="title">Serializable</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> hash = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> partition;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> String topic;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">TopicPartition</span><span class="params">(String topic, <span class="keyword">int</span> partition)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.partition = partition;</span><br><span class="line">        <span class="keyword">this</span>.topic = topic;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">partition</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> partition;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">topic</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> topic;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">｝</span><br></pre></td></tr></table></figure>
+
+<p>例子如下：<code>kafkaConsumer.assign(Arrays.asList(new TopicPartition(&quot;topic&quot;,0)));</code></p>
+</li>
+</ul>
+<p><code>kafkaConsumer</code>  取消订阅</p>
+<ol>
+<li><p>几种取消的方式，效果一样。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kafkaConsumer.unsubscribe();</span><br><span class="line">kafkaConsumer.subscribe(Arrays.asList());</span><br><span class="line">kafkaConsumer.assign(new ArrayList&lt;TopicPartition&gt;());</span><br></pre></td></tr></table></figure>
+
+<p>如果取消了订阅，那么程序会抛异常 ：</p>
+<p><code>java.lang.IllegalStateException: Consumer is not subscribed to any topics or assigned any partitions</code></p>
+</li>
+</ol>
+<p>此外，三种订阅方式（基于集合、基于正则和指定分区的）都会使消费者具有不同的状态，且互斥。因此同一个消费者只能使用其中的一种。</p>
+<h6 id="消费者拉取消息进行消费"><a href="#消费者拉取消息进行消费" class="headerlink" title="消费者拉取消息进行消费"></a>消费者拉取消息进行消费</h6><p>一般消息队列的消费有两种模式：推模式和拉模式。见名知意，推模式就是服务端主动将消息推送给消费者，拉模式就是消费者主动向服务端发起拉取消息的请求。而 <code>Kafka</code> 就是基于拉模式的，通过上面的 <code>demo</code> 代码可见，<code>kafka</code> 中消费者消费是一个持续循环的 <code>poll</code> 的过程，<code>poll()</code> 方法返回的就是所订阅的主题 (分区) 的上一组消息，具体为 <code>ConsumerRecords</code>。然后轮询 <code>ConsumerRecords</code> 就可以对每一条消息 <code>ConsumerRecord</code> 进行处理。 </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (<span class="keyword">true</span>)&#123;</span><br><span class="line">	<span class="comment">// 每隔 1 秒拉取一批数据</span></span><br><span class="line">	ConsumerRecords&lt;String, String&gt; records = kafkaConsumer.poll(<span class="number">1000</span>);</span><br><span class="line">	<span class="comment">// 遍历拉取的消息集</span></span><br><span class="line">	<span class="keyword">for</span> (ConsumerRecord&lt;String, String&gt; record:records)&#123;</span><br><span class="line">		<span class="comment">// 打印每条消息的topic、partition、offset、key、value</span></span><br><span class="line">		LOG.info(record.topic() + <span class="string">":"</span> + record.partition() + <span class="string">":"</span> + record.offset() + <span class="string">" ::: "</span> + record.key() + <span class="string">":"</span> + record.value());</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ConsumerRecord</code> 的属性有很多</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ConsumerRecord</span>&lt;<span class="title">K</span>, <span class="title">V</span>&gt; </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">long</span> NO_TIMESTAMP = Record.NO_TIMESTAMP;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NULL_SIZE = -<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> NULL_CHECKSUM = -<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> String topic;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> partition;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> offset;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> timestamp;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> TimestampType timestampType;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> checksum;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> serializedKeySize;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> serializedValueSize;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> K key;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> V value;</span><br><span class="line">    ... <span class="comment">// 省略其他方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h6 id="消费者提交-offset"><a href="#消费者提交-offset" class="headerlink" title="消费者提交 offset"></a>消费者提交 offset</h6><p>在上面消费消息时，每次 poll 的数据都是未被消费过的数据，要做到标记未被消费过，就需要每次记录上一次消费后的消费的 <code>offset</code>，并且这个记录需要持久化保存，因为存在缓存或者内存可能会丢失。另外，在 <code>Consumer Group</code> 成员变动时，对于同一分区，可能在发生 <code>rebanlance</code> 之后，被不同消费者消费了，也需要持久化记录消费的 <code>offset</code>。</p>
+<p><strong><em>注意！！提交的 offset 是下次拉取的 offset ，而不是现在消费完的 offset 。</em></strong></p>
+<p>当然，在 Kafka 中也有不同的 offset 提交方式，有默认的自动提交，也有显示的手动提交。手动提交又分同步和异步两种：</p>
+<ul>
+<li><p>自动提交 <code>offset</code> ：<code>Kafka</code> 周期性的自动提交 offset。<code>enable.auto.commit = true</code></p>
+</li>
+<li><p>同步提交 <code>offset</code> ：<code>enable.auto.commit = false</code> 每次提交 offset 时，会阻塞线程直到 offset 提交成功才能进行下一次 <code>poll</code> 消息。无参的 <code>commitSync()</code> 是每次 <code>poll</code> 的批量提交，带参数 (TP 和 <code>offset</code> 的 Map) 的是针对每条或每个分区的消息的 <code>offset</code> 进行提交，如果是每条消息进行提交，那么性能将最低；如果是每个分区提交，那么可以类似这样子做：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="comment">// 持续不断消费数据</span></span><br><span class="line">          <span class="keyword">while</span> (<span class="keyword">true</span>)&#123;</span><br><span class="line">              <span class="comment">// 每隔 1 秒拉取一批数据</span></span><br><span class="line">              ConsumerRecords&lt;String, String&gt; records = kafkaConsumer.poll(<span class="number">1000</span>);</span><br><span class="line">              <span class="comment">// 遍历分区</span></span><br><span class="line">              <span class="keyword">for</span> (TopicPartition tp:records.partitions())&#123;</span><br><span class="line">                  <span class="comment">// 获取每个分区的消息</span></span><br><span class="line">                  List&lt;ConsumerRecord&lt;String, String&gt;&gt; tpRecords = records.records(tp);</span><br><span class="line">                  <span class="comment">// 遍历每个分区的消息集合</span></span><br><span class="line">                  <span class="keyword">for</span> (ConsumerRecord&lt;String, String&gt; record:tpRecords)&#123;</span><br><span class="line">                      <span class="comment">// 业务逻辑处理</span></span><br><span class="line">                      LOG.info(record.topic()+<span class="string">":"</span>+record.partition()+<span class="string">":"</span>+record.offset()+<span class="string">" ::: "</span>+record.key()+<span class="string">":"</span>+record.value());</span><br><span class="line">                  &#125;</span><br><span class="line">                  <span class="comment">// 同步提交每个分区的 offset </span></span><br><span class="line">                  <span class="comment">// tpRecords.get(tpRecords.size()-1).offset() 最后一条消息的offset</span></span><br><span class="line">                  kafkaConsumer.commitSync(Collections.singletonMap(tp, <span class="keyword">new</span> OffsetAndMetadata( tpRecords.get(tpRecords.size()-<span class="number">1</span>).offset() + <span class="number">1</span>)));</span><br><span class="line">              &#125;</span><br><span class="line">          &#125;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">          LOG.error(<span class="string">""</span>, e);</span><br><span class="line">      &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">          <span class="comment">// 关闭消费者</span></span><br><span class="line">          kafkaConsumer.close();</span><br><span class="line">      &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+</li>
+</ul>
+<ul>
+<li><p>异步提交 <code>offset</code> ：<code>enable.auto.commit = false</code> 和同步的相反，异步提交 <code>offset</code> 时，不会阻塞消费，可能还没提交成功就已经拉取完下一批数据了。异步提交可以一定程度的提高性能。异步提交有三个重载方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">commitAsync</span><span class="params">()</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">commitAsync</span><span class="params">(OffsetCommitCallback callback)</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">commitAsync</span><span class="params">(<span class="keyword">final</span> Map&lt;TopicPartition, OffsetAndMetadata&gt; offsets, OffsetCommitCallback callback)</span></span></span><br></pre></td></tr></table></figure>
+
+<p>第一个和第三个中的 <code>offset</code> 和同步提交的一样，不一样的就是第二个和第三个的 <code>OffsetCommitCallback</code>。异步和同步最大的不同就是，有可能前一批 <code>offset</code> 提交失败，但是后一批提交成功，这样子容易造成重复消费。如下代码，<code>OffsetCommitCallback</code> 类，在提交完成之后会回调其中的 <code>onComplete()</code> 方法，我们可以在这个方法里面进行判断成功或者失败，然后进行相应的处理。假设提交失败的话，如果需要进行重试，那么要注意判断此次提交的  offset 和已经提交成功的 offset 的大小，然后才能知道是否需要提交 <code>offset</code> （如果后一批提交成功，那么已经提交成功的 offset 就肯定会比前一批提交失败的 <code>offset</code> 大）。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (<span class="keyword">true</span>)&#123;</span><br><span class="line">           <span class="comment">// 每隔 1 秒拉取一批数据</span></span><br><span class="line">           ConsumerRecords&lt;String, String&gt; records = kafkaConsumer.poll(<span class="number">1000</span>);</span><br><span class="line">           <span class="comment">// 遍历拉取的消息集</span></span><br><span class="line">           <span class="keyword">for</span> (TopicPartition tp:records.partitions())&#123;</span><br><span class="line">               List&lt;ConsumerRecord&lt;String, String&gt;&gt; tpRecords = records.records(tp);</span><br><span class="line">               <span class="keyword">for</span> (ConsumerRecord&lt;String, String&gt; record:tpRecords)&#123;</span><br><span class="line">                   LOG.info(record.topic()+<span class="string">":"</span>+record.partition()+<span class="string">":"</span>+record.offset()+<span class="string">" ::: "</span>+record.key()+<span class="string">":"</span>+record.value());</span><br><span class="line">               &#125;</span><br><span class="line">               <span class="comment">// 异步提交每个分区的 offset </span></span><br><span class="line">               <span class="comment">// tpRecords.get(tpRecords.size()-1).offset() 最后一条消息的offset</span></span><br><span class="line">               kafkaConsumer.commitAsync( Collections.singletonMap(tp, <span class="keyword">new</span> OffsetAndMetadata(tpRecords.get(tpRecords.size() - <span class="number">1</span>).offset() + <span class="number">1</span>)),</span><br><span class="line">                       <span class="keyword">new</span> OffsetCommitCallback() &#123;</span><br><span class="line">                   <span class="meta">@Override</span></span><br><span class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onComplete</span><span class="params">(Map&lt;TopicPartition, OffsetAndMetadata&gt; offsets, Exception exception)</span> </span>&#123;</span><br><span class="line">                        <span class="keyword">if</span> (exception == <span class="keyword">null</span>) &#123;</span><br><span class="line">                            LOG.info(<span class="string">"offset 提交成功："</span> + offsets);</span><br><span class="line">                        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                            LOG.error(<span class="string">"kafka commit offset failure!!"</span>);</span><br><span class="line">                        &#125;</span><br><span class="line">                   &#125;</span><br><span class="line">               &#125;);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+</li>
+</ul>
+<h6 id="关闭消费者实例"><a href="#关闭消费者实例" class="headerlink" title="关闭消费者实例"></a>关闭消费者实例</h6><p>正常情况下，消费者是一直都在运行的，但是如果我们需要暂定或者关闭消费者，就需要考虑怎么退出消费的循环了。如果是暂定，则需要考虑如何恢复。</p>
+<p>先看简单的暂定和恢复，<code>KafkaConsumer</code> 提供了 <code>pause()</code> 和 <code>resume()</code> 来暂停和恢复 <code>kafkaConsumer</code> 对某些分区的消费。还有一个无参的 <code>paused()</code> 的方法来返回已经暂定的方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">pause</span><span class="params">(Collection&lt;TopicPartition&gt; partitions)</span>   <span class="comment">// 暂定某些分区的消费</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">resume</span><span class="params">(Collection&lt;TopicPartition&gt; partitions)</span>  <span class="comment">// 恢复某些已经暂定的分区的消费</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> Set&lt;TopicPartition&gt; <span class="title">paused</span><span class="params">()</span>	                       <span class="comment">// 返回已经暂定的分区列表</span></span></span><br></pre></td></tr></table></figure>
+
+<p>然后，如何优雅的退出 <code>poll</code> 的那层循环呢。一般来说有两种方式：</p>
+<ul>
+<li>开始 <code>poll</code> 的那个循环不用试固定的 <code>true</code>，而是做成一个能开关的全局变量，这样子就能在其他地方也可以直接中断循环</li>
+<li>直接调用 <code>Kafkaconsumer</code> 的 <code>wakeup()</code> 方法。该方法会退出 <code>poll</code> 的循环并抛出一个 <code>wakeup</code> 的异常</li>
+</ul>
+<p>在退出循环之后，需要显示的关闭 <code>KafkaConsumer</code>，以释放资源。关闭实例有三个重载方法：  </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kafkaConsumer.close();     <span class="comment">// 默认 30 秒，也是调用的后面的方法</span></span><br><span class="line">kafkaConsumer.close(<span class="number">30000</span>, TimeUnit.MILLISECONDS);   <span class="comment">// 因为第三种方式的出现，现已经取消。</span></span><br><span class="line">kafkaConsumer.close(Duration.ofMillis(<span class="number">30000</span>));</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Apache/" rel="tag"># Apache</a>
+          
+            <a href="/tags/Kafka/" rel="tag"># Kafka</a>
+          
+            <a href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" rel="tag"># 读书笔记</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/06/06/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/05.%E9%87%8D%E8%A6%81%E7%9A%84%E7%94%9F%E4%BA%A7%E8%80%85%E5%8F%82%E6%95%B0/" rel="next" title="重要的生产者参数">
+                <i class="fa fa-chevron-left"></i> 重要的生产者参数
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/06/08/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/11.%E6%B6%88%E8%B4%B9%E8%80%85%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/" rel="prev" title="反序列化">
+                反序列化 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/blog.jpg"
+               alt="Roman" />
+          <p class="site-author-name" itemprop="name">Roman</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">54</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#消费"><span class="nav-number">1.</span> <span class="nav-text">消费</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#消费者和消费组"><span class="nav-number">1.0.0.1.</span> <span class="nav-text">消费者和消费组</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#客户端开发"><span class="nav-number">1.0.0.2.</span> <span class="nav-text">客户端开发</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#配置消费者-Consumer-参数以及创建相应的消费者实例"><span class="nav-number">1.0.0.3.</span> <span class="nav-text">配置消费者 Consumer 参数以及创建相应的消费者实例</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#消费者订阅-Topic"><span class="nav-number">1.0.0.4.</span> <span class="nav-text">消费者订阅 Topic</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#消费者拉取消息进行消费"><span class="nav-number">1.0.0.5.</span> <span class="nav-text">消费者拉取消息进行消费</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#消费者提交-offset"><span class="nav-number">1.0.0.6.</span> <span class="nav-text">消费者提交 offset</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#关闭消费者实例"><span class="nav-number">1.0.0.7.</span> <span class="nav-text">关闭消费者实例</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Roman</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next" target="_blank" rel="noopener">
+    NexT.Gemini
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

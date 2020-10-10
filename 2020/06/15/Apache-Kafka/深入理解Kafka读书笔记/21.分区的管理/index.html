@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Apache,Kafka,读书笔记," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="优先副本的选举   Kafka 通过副本机制来提升服务的可靠性，但是只有 leader 副本提供对外的读写服务，这样就意味着，当 leader 丢失时，需要从 follower 副本中选举一个 leader 来提供服务。Kafka 在我们创建 Topic 的时候，会尽量的把分区和副本均匀的分布在所有的 broker 上，同时 leader 副本也会比较均匀，以此来保证整个集群的负载均衡和稳定性。例">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分区的管理">
+<meta property="og:url" content="https://romandata.github.io/2020/06/15/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/21.%E5%88%86%E5%8C%BA%E7%9A%84%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="Roman&#39;s Data">
+<meta property="og:description" content="优先副本的选举   Kafka 通过副本机制来提升服务的可靠性，但是只有 leader 副本提供对外的读写服务，这样就意味着，当 leader 丢失时，需要从 follower 副本中选举一个 leader 来提供服务。Kafka 在我们创建 Topic 的时候，会尽量的把分区和副本均匀的分布在所有的 broker 上，同时 leader 副本也会比较均匀，以此来保证整个集群的负载均衡和稳定性。例">
+<meta property="article:published_time" content="2020-06-15T13:44:02.000Z">
+<meta property="article:modified_time" content="2020-10-10T16:56:05.348Z">
+<meta property="article:author" content="Roman">
+<meta property="article:tag" content="Apache">
+<meta property="article:tag" content="Kafka">
+<meta property="article:tag" content="读书笔记">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    sidebar: {"position":"left","display":"post","offset":6,"offset_float":6,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://romandata.github.io/2020/06/15/Apache-Kafka/深入理解Kafka读书笔记/21.分区的管理/"/>
+
+
+
+
+
+  <title>分区的管理 | Roman's Data</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Roman's Data</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">铁马冰河入梦来</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-sitemap">
+          <a href="/sitemap.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br />
+            
+            站点地图
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://romandata.github.io/2020/06/15/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/21.%E5%88%86%E5%8C%BA%E7%9A%84%E7%AE%A1%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Roman">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/blog.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Roman's Data">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">分区的管理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-15T21:44:02+08:00">
+                2020-06-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Kafka/" itemprop="url" rel="index">
+                    <span itemprop="name">Apache-Kafka</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index">
+                    <span itemprop="name">深入理解Kafka读书笔记</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="优先副本的选举"><a href="#优先副本的选举" class="headerlink" title="优先副本的选举"></a>优先副本的选举</h3><p>   Kafka 通过副本机制来提升服务的可靠性，但是只有 leader 副本提供对外的读写服务，这样就意味着，当 leader 丢失时，需要从 follower 副本中选举一个 leader 来提供服务。Kafka 在我们创建 Topic 的时候，会尽量的把分区和副本均匀的分布在所有的 broker 上，同时 leader 副本也会比较均匀，以此来保证整个集群的负载均衡和稳定性。例如我们创建一个 Topic：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@tnode2 bin]# ./kafka-topics.sh --create --zookeeper tnode3:2181 --replication-factor 3 --partitions 3 --topic topic003</span><br><span class="line">Created topic "topic003".</span><br><span class="line">[root@tnode2 bin]# ./kafka-topics.sh --describe --zookeeper tnode3:2181 --topic topic003</span><br><span class="line">Topic:topic003	PartitionCount:3	ReplicationFactor:3	Configs:</span><br><span class="line">	Topic: topic003	Partition: 0	Leader: 0	Replicas: 0,2,1	Isr: 0,2,1</span><br><span class="line">	Topic: topic003	Partition: 1	Leader: 1	Replicas: 1,0,2	Isr: 1,0,2</span><br><span class="line">	Topic: topic003	Partition: 2	Leader: 2	Replicas: 2,1,0	Isr: 2,1,0</span><br></pre></td></tr></table></figure>
+
+<p>可以看出，三个分区分别在不同的 broker 上，同时每个分区的每个副本都在不同的 broker 上 ( 副本数是不能超过 broker 数的，否则创建时会报错 ) ，另外，三个分区的 leader 也分布在不同的 broker 上。但是时间久了，总会有 leader 副本丢失，导致 副本的选举，重新出现新的 leader。假设我们将 broker2 重启一下，再看 Topic 情况。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@tnode2 bin]# ./kafka-topics.sh --describe --zookeeper tnode3:2181 --topic topic003</span><br><span class="line">Topic:topic003	PartitionCount:3	ReplicationFactor:3	Configs:</span><br><span class="line">	Topic: topic003	Partition: 0	Leader: 0	Replicas: 0,2,1	Isr: 0,1,2</span><br><span class="line">	Topic: topic003	Partition: 1	Leader: 1	Replicas: 1,0,2	Isr: 1,0,2</span><br><span class="line">	Topic: topic003	Partition: 2	Leader: 1	Replicas: 2,1,0	Isr: 1,0,2</span><br></pre></td></tr></table></figure>
+
+<p>很明显，在重启之后，Topic 的 leader副本发生了变化，即发生了副本的重新选举，如果这种选举经常发生的话，就很有可能导致负载很不均衡。在 Kafka 中，为了保证集群的稳定性和可靠性，引入了一个优先副本的机制，即在创建 Topic 的时候，AR 列表的第一个副本为 优先副本，尽可能会将它选为 leader 副本。</p>
+<p>同时，为了保证所有分区的 leader 副本均衡分布，Kafka 有几种方式来进行分区平衡。</p>
+<ul>
+<li><p>broker端参数</p>
+<p>auto.leader.rebalance.enable 默认为 true，即开启自动分区平衡。当开启自动时，Kafka 的控制器会启动定时任务，定时（周期由 <code>leader.imbalance.check.interval.seconds</code> 控制，默认为300秒，即 5分钟）轮询所有 broker 节点，计算每个 broker 节点的分区不平衡率（非优先副本 leader 数 / 分区总数），如果超过一定值（<code>leader.imbalance.per.broker.percentage</code>，默认为10%）。</p>
+<p>不建议在生产环境中开启自动分区平衡，因为自动平衡的时间无法控制，可能会造成不必要的麻烦。尽量对不平衡率进行监控，然后手动进行分区平衡</p>
+</li>
+<li><p>分区平衡脚本 <code>kafka-preferred-replica-election.sh</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@tnode2 bin]# ./kafka-preferred-replica-election.sh --zookeeper tnode3:2181</span><br><span class="line">Created preferred replica election path with &#123;"version":1,"partitions":[&#123;"topic":"LxmTest","partition":2&#125;,&#123;"topic":"FLINK-TOPIC-1","partition":0&#125;,&#123;"topic":"__consumer_offsets","partition":34&#125;,&#123;"topic":"LxmTest","partition":5&#125;,&#123;"topic":"SINK-TEST-TOPIC","partition":0&#125;,&#123;"topic":"__consumer_offsets","partition":36&#125;,&#123;"to....</span><br><span class="line"></span><br><span class="line">[root@tnode2 bin]# ./kafka-topics.sh --describe --zookeeper tnode3:2181 --topic topic003</span><br><span class="line">Topic:topic003	PartitionCount:3	ReplicationFactor:3	Configs:</span><br><span class="line">	Topic: topic003	Partition: 0	Leader: 0	Replicas: 0,2,1	Isr: 0,1,2</span><br><span class="line">	Topic: topic003	Partition: 1	Leader: 1	Replicas: 1,0,2	Isr: 1,0,2</span><br><span class="line">	Topic: topic003	Partition: 2	Leader: 2	Replicas: 2,1,0	Isr: 1,0,2</span><br></pre></td></tr></table></figure>
+
+<p>在使用 此脚本时，会将集群中所有的 Topic 的分区进行分区平衡的操作，如果集群规模较大，直接这样使用可能也会影响集群的可用性。所幸此脚本还有参数 <code>--path-to-json-file</code> 来批量进行分区平衡，用法如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[root@tnode2 bin]# ./kafka-topics.sh --describe --zookeeper tnode3:2181 --topic topic003</span><br><span class="line">Topic:topic003	PartitionCount:3	ReplicationFactor:3	Configs:</span><br><span class="line">	Topic: topic003	Partition: 0	Leader: 0	Replicas: 0,2,1	Isr: 0,1</span><br><span class="line">	Topic: topic003	Partition: 1	Leader: 1	Replicas: 1,0,2	Isr: 1,0</span><br><span class="line">	Topic: topic003	Partition: 2	Leader: 1	Replicas: 2,1,0	Isr: 1,0</span><br><span class="line">[root@tnode2 bin]# ./kafka-preferred-replica-election.sh --zookeeper tnode3:2181 --path-to-json-file election.json </span><br><span class="line">Created preferred replica election path with &#123;"version":1,"partitions":[&#123;"topic":"topic003","partition":0&#125;,&#123;"topic":"topic003","partition":1&#125;,&#123;"topic":"topic003","partition":2&#125;]&#125;</span><br><span class="line">Successfully started preferred replica election for partitions Set([topic003,0], [topic003,1], [topic003,2])</span><br><span class="line">[root@tnode2 bin]# ./kafka-topics.sh --describe --zookeeper tnode3:2181 --topic topic003</span><br><span class="line">Topic:topic003	PartitionCount:3	ReplicationFactor:3	Configs:</span><br><span class="line">	Topic: topic003	Partition: 0	Leader: 0	Replicas: 0,2,1	Isr: 0,1,2</span><br><span class="line">	Topic: topic003	Partition: 1	Leader: 1	Replicas: 1,0,2	Isr: 1,0,2</span><br><span class="line">	Topic: topic003	Partition: 2	Leader: 2	Replicas: 2,1,0	Isr: 1,0,2</span><br></pre></td></tr></table></figure>
+
+
+</li>
+</ul>
+<p>在生产中，尽量使用批量分区平衡的方式来进行平衡分区 leader，同时也要避开业务高峰期。</p>
+<h3 id="分区重分配"><a href="#分区重分配" class="headerlink" title="分区重分配"></a>分区重分配</h3><p>在 Kafka 中，如果发生 broker 节点宕机、broker 下线、新增 broker 等情况时，会发生部分副本不可用或者新 broker 无副本，这样会导致集群的负载不均衡。为了解决这类问题，就出现了分区重分配的策略，见文档</p>
+<h3 id="复制限流"><a href="#复制限流" class="headerlink" title="复制限流"></a>复制限流</h3><p>副本间的复制限流有两种方式：</p>
+<ul>
+<li><p>kafka-config.sh 脚本来实现</p>
+<p><strong>broker</strong> 端有两个参数与复制限流相关：<code>follower.replication.throttled.rate</code> 和 <code>leader.replication.throttled.rate</code> ，一个用于设置 follower 的复制速度，一个用于设置 leader 的传输速度，单位均为 B/s。示例：先设置两个参数值，后再删除两个设置。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@tnode2 bin]# ./kafka-configs.sh --zookeeper tnode3:2181 --entity-type brokers --entity-name 2 --alter --add-config follower.replication.throttled.rate=1024,leader.replication.throttled.rate=1024</span><br><span class="line">Completed Updating config for entity: brokers '2'.</span><br><span class="line">[root@tnode2 bin]# ./kafka-configs.sh --zookeeper tnode3:2181 --entity-type brokers --entity-name 2 --describe</span><br><span class="line">Configs for brokers '2' are leader.replication.throttled.rate=1024,follower.replication.throttled.rate=1024</span><br><span class="line">[root@tnode2 bin]# ./kafka-configs.sh --zookeeper tnode3:2181 --entity-type brokers --entity-name 2 --alter --delete-config follower.replication.throttled.rate,leader.replication.throttled.rate</span><br><span class="line">Completed Updating config for entity: brokers '2'.</span><br><span class="line">[root@tnode2 bin]# ./kafka-configs.sh --zookeeper tnode3:2181 --entity-type brokers --entity-name 2 --describe</span><br><span class="line">Configs for brokers '2' are</span><br></pre></td></tr></table></figure>
+
+<p>Topic 端也有两个参数与复制限流相关：follower.replication.throttled.replicas 和 leader.replication.throttled.replicas ，用法和上面的类似，<code>--entity-type</code> 为 topic ，<code>--entity-name</code> 为 topicName。</p>
+</li>
+<li><p>kafka-reassign-partition.sh 脚本实现</p>
+</li>
+</ul>
+<h3 id="修改副本数"><a href="#修改副本数" class="headerlink" title="修改副本数"></a>修改副本数</h3><p>增加副本数：和分区重分配的用法一样，只不过需要执行的分区文件不一样，如下：（原来分区只有2个副本，这里添加第三个副本）。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;"version":1,"partitions":[</span><br><span class="line">&#123;"topic":"LxmTest","partition":2,"replicas":[2,1,0],"log_dirs":["any","any","any"]&#125;,   &#123;"topic":"LxmTest","partition":0,"replicas":[0,2,1],"log_dirs":["any","any","any"]&#125;,   &#123;"topic":"LxmTest","partition":1,"replicas":[1,0,2],"log_dirs":["any","any","any"]&#125;</span><br><span class="line">]&#125;</span><br></pre></td></tr></table></figure>
+
+<p>减少副本数：和增加类似，减少 replicas 列表中副本数和对应的 log_dirs 列表 即可</p>
+<h3 id="选择合适的分区数"><a href="#选择合适的分区数" class="headerlink" title="选择合适的分区数"></a>选择合适的分区数</h3><p>同等外部条件下，随着分区数的增加，吞吐量会随着增加，直到一个临界值后，分区数再增加，吞吐量下降…</p>
+<p>因此，对于新 Kafka 集群，最好先使用性能测试工具，测出合适的分区数范围。如果不测的话，普遍使用broker 的整数倍 来作为分区数。</p>
+<p>分区数也有上限，上限在于系统的打开文件上限数。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Apache/" rel="tag"># Apache</a>
+          
+            <a href="/tags/Kafka/" rel="tag"># Kafka</a>
+          
+            <a href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/" rel="tag"># 读书笔记</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/06/15/Apache-Druid/00.Druid%E5%88%9D%E6%8E%A2/" rel="next" title="Druid初探">
+                <i class="fa fa-chevron-left"></i> Druid初探
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/06/15/Apache-Flink/FlinkCoding/02.DataStream%20API%E4%BB%8B%E7%BB%8D%E5%92%8C%E7%A4%BA%E4%BE%8B/" rel="prev" title="Flink DataStream API介绍和示例">
+                Flink DataStream API介绍和示例 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/blog.jpg"
+               alt="Roman" />
+          <p class="site-author-name" itemprop="name">Roman</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">54</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#优先副本的选举"><span class="nav-number">1.</span> <span class="nav-text">优先副本的选举</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分区重分配"><span class="nav-number">2.</span> <span class="nav-text">分区重分配</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#复制限流"><span class="nav-number">3.</span> <span class="nav-text">复制限流</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#修改副本数"><span class="nav-number">4.</span> <span class="nav-text">修改副本数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#选择合适的分区数"><span class="nav-number">5.</span> <span class="nav-text">选择合适的分区数</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Roman</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next" target="_blank" rel="noopener">
+    NexT.Gemini
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

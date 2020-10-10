@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Apache,Flink," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="DataStream API介绍和示例Flink程序运行流程1. 获取执行环境 getExecutionEnvironment()   createLocalEnvironment()   createRemoteEnvironment(String host, int port, String… jarFiles)   2. 加载创建初始化数据 readTextFile()   addSourc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink DataStream API介绍和示例">
+<meta property="og:url" content="https://romandata.github.io/2020/06/15/Apache-Flink/FlinkCoding/02.DataStream%20API%E4%BB%8B%E7%BB%8D%E5%92%8C%E7%A4%BA%E4%BE%8B/index.html">
+<meta property="og:site_name" content="Roman&#39;s Data">
+<meta property="og:description" content="DataStream API介绍和示例Flink程序运行流程1. 获取执行环境 getExecutionEnvironment()   createLocalEnvironment()   createRemoteEnvironment(String host, int port, String… jarFiles)   2. 加载创建初始化数据 readTextFile()   addSourc">
+<meta property="article:published_time" content="2020-06-15T14:33:33.000Z">
+<meta property="article:modified_time" content="2020-10-10T16:55:02.982Z">
+<meta property="article:author" content="Roman">
+<meta property="article:tag" content="Apache">
+<meta property="article:tag" content="Flink">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    sidebar: {"position":"left","display":"post","offset":6,"offset_float":6,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://romandata.github.io/2020/06/15/Apache-Flink/FlinkCoding/02.DataStream API介绍和示例/"/>
+
+
+
+
+
+  <title>Flink DataStream API介绍和示例 | Roman's Data</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Roman's Data</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">铁马冰河入梦来</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-sitemap">
+          <a href="/sitemap.xml" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-sitemap"></i> <br />
+            
+            站点地图
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://romandata.github.io/2020/06/15/Apache-Flink/FlinkCoding/02.DataStream%20API%E4%BB%8B%E7%BB%8D%E5%92%8C%E7%A4%BA%E4%BE%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Roman">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/blog.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Roman's Data">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Flink DataStream API介绍和示例</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-15T22:33:33+08:00">
+                2020-06-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Flink/" itemprop="url" rel="index">
+                    <span itemprop="name">Apache-Flink</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Apache-Flink/FlinkCoding/" itemprop="url" rel="index">
+                    <span itemprop="name">FlinkCoding</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="DataStream-API介绍和示例"><a href="#DataStream-API介绍和示例" class="headerlink" title="DataStream API介绍和示例"></a>DataStream API介绍和示例</h1><h4 id="Flink程序运行流程"><a href="#Flink程序运行流程" class="headerlink" title="Flink程序运行流程"></a>Flink程序运行流程</h4><h6 id="1-获取执行环境"><a href="#1-获取执行环境" class="headerlink" title="1. 获取执行环境"></a>1. 获取执行环境</h6><blockquote>
+<p>getExecutionEnvironment()  </p>
+<p>createLocalEnvironment()  </p>
+<p>createRemoteEnvironment(String host, int port, String… jarFiles) </p>
+</blockquote>
+<h6 id="2-加载创建初始化数据"><a href="#2-加载创建初始化数据" class="headerlink" title="2. 加载创建初始化数据"></a>2. 加载创建初始化数据</h6><blockquote>
+<p>readTextFile()  </p>
+<p>addSource  </p>
+<p>..</p>
+</blockquote>
+<h6 id="3-对数据在transformation-operator"><a href="#3-对数据在transformation-operator" class="headerlink" title="3. 对数据在transformation operator"></a>3. 对数据在transformation operator</h6><blockquote>
+<p>map  </p>
+<p>flatMap  </p>
+<p>filter  </p>
+<p>..</p>
+</blockquote>
+<h6 id="4-指定计算结果的输出位置-sink"><a href="#4-指定计算结果的输出位置-sink" class="headerlink" title="4. 指定计算结果的输出位置 sink"></a>4. 指定计算结果的输出位置 sink</h6><blockquote>
+<p>print()  </p>
+<p>writeAdText(String path)  </p>
+<p>addSink  </p>
+<p>..</p>
+</blockquote>
+<h6 id="5-触发程序执行-execute"><a href="#5-触发程序执行-execute" class="headerlink" title="5. 触发程序执行 execute"></a>5. 触发程序执行 execute</h6><blockquote>
+<p>env.execute()  </p>
+<p>在sink是print时，不需要显示execute，否则会报错。因为在print方法里已经默认调用了execute。</p>
+</blockquote>
+<h2 id="StreamExecutionEnvironment"><a href="#StreamExecutionEnvironment" class="headerlink" title="StreamExecutionEnvironment"></a>StreamExecutionEnvironment</h2><p>StreamExecutionEnvironment 作为程序入口context，有两类：LocalStreamEnvironment(本地环境) 和RemoteStreamEnvironment(远程环境)。<br>ExecutionConfig、CheckpointConfig等配置均在这里初始化。另外，这里也能设置线程数，检查点周期，以及检查点模式。还有状态后端序列化类型以及注册Type等。  </p>
+<ul>
+<li>如果集群是standalone模式，则StreamExecutionEnvironment.getExecutionEnvironment() 相当于StreamExecutionEnvironment.createLocalEnvironment()</li>
+</ul>
+<h2 id="DataStream-Source"><a href="#DataStream-Source" class="headerlink" title="DataStream Source"></a>DataStream Source</h2><h6 id="基于文件的"><a href="#基于文件的" class="headerlink" title="基于文件的"></a>基于文件的</h6><blockquote>
+<ul>
+<li>readTextFile(String path)    charsetName 默认用 UTF-8  </li>
+<li>readTextFile(String path, String charsetName)：文本文件，格式为 TextInputFormat，返回   BasicTypeInfo.STRING_TYPE_INFO  ，TextInputFormat对象调用 setCharsetName(charsetName) 设置字符  ，然后底层再调用 readFile 方法。  </li>
+<li>readFile(FileInputFormat<OUT> inputFormat,   String filePath,   FileProcessingMode watchType,   long interval,   TypeInformation<OUT> typeInformation)：根据给定格式和路径读取文件，根据watchType（FileProcessingMode.PROCESS_ONCE：处理一次路径文件后退出，FileProcessingMode.PROCESS_CONTINUOUSLY：检测给定路径的新数据，此时若旧文件发生修改也会重读，不符合exactly-once），interval 扫描路径的周期。调用 createFileInput ，createFileInput 调用 addSource 。</li>
+</ul>
+</blockquote>
+<h6 id="Socket流"><a href="#Socket流" class="headerlink" title="Socket流"></a>Socket流</h6><blockquote>
+<ul>
+<li>socketTextStream(hostname , port)  // 主机，端口号，字段分隔符 delimiter 默认为 \n</li>
+<li>socketTextStream(hostname , port , delimiter)   // maxRetry 默认为零</li>
+<li>socketTextStream(hostname, port, delimiter, maxRetry )<br>maxRetry: 当socket端挂掉是，程序等待的最大重试时间。每秒都会重试连接，为0即停止程序…。利用 SocketTextStreamFunction 生成 sourceFunction对象，调用 addSource 生成DataStreamSource</li>
+</ul>
+</blockquote>
+<h6 id="基于数据集的"><a href="#基于数据集的" class="headerlink" title="基于数据集的"></a>基于数据集的</h6><blockquote>
+<p>都是通过本身的SourceFunction对象调用addSource</p>
+<ul>
+<li>fromCollection(Iterator, class)  </li>
+<li>fromCollection(Iterator, TypeInformation)    </li>
+<li>fromElements(T…)  </li>
+<li>fromParallelCollection</li>
+</ul>
+</blockquote>
+<h6 id="Customer-Source-自定义source"><a href="#Customer-Source-自定义source" class="headerlink" title="Customer Source 自定义source"></a>Customer Source 自定义source</h6><blockquote>
+<ul>
+<li>addSource(sourceFunction )    // sourceName 为默认值</li>
+<li>addSource(sourceFunction ,  sourceName) // typeInfo 为 null</li>
+<li>addSource(sourceFunction ,  typeInformation) // SourceName 有默认值</li>
+<li>addSource(sourceFunction ,  sourceName ,  typeInformation)  </li>
+</ul>
+</blockquote>
+<p><strong><em>自定义source代码示例</em></strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> source;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.flink.streaming.api.functions.source.RichSourceFunction;</span><br><span class="line"><span class="keyword">import</span> org.slf4j.Logger;</span><br><span class="line"><span class="keyword">import</span> org.slf4j.LoggerFactory;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * RichSourceFunction 实现了SourceFunction接口，只做了序列化</span></span><br><span class="line"><span class="comment"> * 实现接口SourceFunction或者继承 RichSourceFunction 需要申明返回的数据类型，不然会报错：</span></span><br><span class="line"><span class="comment"> * Caused by: org.apache.flink.api.common.functions.InvalidTypesException:</span></span><br><span class="line"><span class="comment"> *      The types of the interface org.apache.flink.streaming.api.functions.source.SourceFunction could not be inferred.</span></span><br><span class="line"><span class="comment"> *      Support for synthetic interfaces, lambdas, and generic or raw types is limited at this point</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyDataSource</span> <span class="keyword">extends</span> <span class="title">RichSourceFunction</span>&lt;<span class="title">Integer</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Logger LOG = LoggerFactory.getLogger(MyDataSource<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">boolean</span> isRunning = <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">(SourceContext&lt;Integer&gt; ctx)</span> <span class="keyword">throws</span> Exception</span>&#123;</span><br><span class="line">        <span class="keyword">while</span> (isRunning)&#123;</span><br><span class="line">            Thread.sleep(<span class="number">300</span>);</span><br><span class="line">            <span class="keyword">int</span> rnd = (<span class="keyword">int</span>) (Math.random() * <span class="number">10</span>);</span><br><span class="line"></span><br><span class="line">            LOG.info(<span class="string">"emit data:"</span>+rnd);</span><br><span class="line">            ctx.collect( rnd );</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">cancel</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        isRunning = <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="DataStream-Transformations"><a href="#DataStream-Transformations" class="headerlink" title="DataStream Transformations"></a>DataStream Transformations</h2><h6 id="Map-DataStream-gt-DataStream"><a href="#Map-DataStream-gt-DataStream" class="headerlink" title="Map [DataStream -&gt; DataStream]"></a>Map [DataStream -&gt; DataStream]</h6><blockquote>
+<p>对数据集内每条数据都进行相同的规则处理，常用来做清洗和转换数据格式等</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">DataStream&lt;Tuple2&lt;String, Integer&gt;&gt; windowCount</span><br><span class="line">        .map(<span class="keyword">new</span> MapFunction&lt;Tuple2&lt;String,Integer&gt;, String&gt;() &#123;</span><br><span class="line">             <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> String <span class="title">map</span><span class="params">(Tuple2&lt;String, Integer&gt; stringIntegerTuple2)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                <span class="keyword">return</span> stringIntegerTuple2.f0;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br></pre></td></tr></table></figure>
+<h6 id="FlatMap-DataStream-gt-DataStream"><a href="#FlatMap-DataStream-gt-DataStream" class="headerlink" title="FlatMap [DataStream -&gt; DataStream]"></a>FlatMap [DataStream -&gt; DataStream]</h6><blockquote>
+<p>将数据集进行打平，即按照逻辑合并在一个或多个数据集里面</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">DataStream&lt;Tuple2&lt;String, Integer&gt;&gt; windowCount = text</span><br><span class="line">        .flatMap(<span class="keyword">new</span> FlatMapFunction&lt;String, Tuple2&lt;String, Integer&gt;&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">flatMap</span><span class="params">(String value, Collector&lt;Tuple2&lt;String, Integer&gt;&gt; collector)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                <span class="keyword">for</span> (String word : value.split(<span class="string">"\\s"</span>)) &#123;</span><br><span class="line">                    collector.collect(Tuple2.of(word, <span class="number">1</span>));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br></pre></td></tr></table></figure>
+<h6 id="Filter-DataStream-gt-DataStream"><a href="#Filter-DataStream-gt-DataStream" class="headerlink" title="Filter [DataStream -&gt; DataStream]"></a>Filter [DataStream -&gt; DataStream]</h6><blockquote>
+<p>过滤数据，符合要求的数据返回 true，不符合要求的返回 false</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">text</span><br><span class="line">        .filter(<span class="keyword">new</span> FilterFunction&lt;String&gt;() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">filter</span><span class="params">(String s)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">                <span class="keyword">return</span> s.contains(<span class="string">"h"</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br></pre></td></tr></table></figure>
+<h6 id="KeyBy-DataStream-gt-KeyedStream"><a href="#KeyBy-DataStream-gt-KeyedStream" class="headerlink" title="KeyBy [DataStream -&gt; KeyedStream]"></a>KeyBy [DataStream -&gt; KeyedStream]</h6><blockquote>
+<p>在数据集中进行 Partition操作，将相同的key值的数据放到相同的分区中，返回 keyedStream。<br>指定key时可以按位置指定，也可以按名称指定（此时需要pojo类、case class等明确了字段位置的）<br>注意以下类型不能成为key：</p>
+<ul>
+<li>POJO类型但是不覆盖 hashCode() 方法并依赖于Object.hashCode() 实现</li>
+<li>任何类型的数组</li>
+</ul>
+</blockquote>
+<h6 id="Reduce-KeyedStream-gt-DataStream"><a href="#Reduce-KeyedStream-gt-DataStream" class="headerlink" title="Reduce [KeyedStream -&gt; DataStream]"></a>Reduce [KeyedStream -&gt; DataStream]</h6><blockquote>
+<p> 定义聚合逻辑，对数据进行聚合处理，其聚合逻辑要求满足运算结合律和交换律。当前元素的值和最后一个Reduce的值进行组合并返回出新的Reduce的值。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.reduce(<span class="keyword">new</span> ReduceFunction&lt;Tuple2&lt;String, Integer&gt;&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Tuple2&lt;String, Integer&gt; <span class="title">reduce</span><span class="params">(Tuple2&lt;String, Integer&gt; stringIntegerTuple2, Tuple2&lt;String, Integer&gt; t1)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> Tuple2.of(stringIntegerTuple2.f0, stringIntegerTuple2.f1+t1.f1);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<h6 id="Aggregate-keyedStream-gt-DataStream"><a href="#Aggregate-keyedStream-gt-DataStream" class="headerlink" title="Aggregate [keyedStream -&gt; DataStream]"></a>Aggregate [keyedStream -&gt; DataStream]</h6><blockquote>
+<p>聚合算子，将Reduce算子中的函数进行了封装。封装的操作包括 sum、min、minBy、max、maxBy等</p>
+</blockquote>
+<h6 id="Fold-keyedStream-gt-DataStream"><a href="#Fold-keyedStream-gt-DataStream" class="headerlink" title="Fold [keyedStream -&gt; DataStream]"></a>Fold [keyedStream -&gt; DataStream]</h6><blockquote>
+<p>将数据进行滚动折叠，可指定开始值。未来将取消，全部用Aggregate替代</p>
+</blockquote>
+<h6 id="Union"><a href="#Union" class="headerlink" title="Union"></a>Union</h6><blockquote>
+<p>合并操作，要求两个 DataStream 数据格式一样</p>
+</blockquote>
+<h6 id="Connect"><a href="#Connect" class="headerlink" title="Connect"></a>Connect</h6><blockquote>
+<p>不要求格式一样，类似拼接格式操作，返回 ConnectedStreams。  </p>
+<p>比如 (String，Int) connect (Int)  结果: ((String, Int), Int)   </p>
+<p>ConnectedStreams不能直接print，需要使用CoMapFunction 或CoFlatMapFunction分别处理DataStrea，处理后返回的数据类型必须保持一致。</p>
+</blockquote>
+<h6 id="Split-DataStream-gt-SplitStream"><a href="#Split-DataStream-gt-SplitStream" class="headerlink" title="Split [DataStream -&gt; SplitStream]"></a>Split [DataStream -&gt; SplitStream]</h6><blockquote>
+<p>Union算子的逆向实现</p>
+</blockquote>
+<h6 id="Select-SplitStream-gt-DataStream"><a href="#Select-SplitStream-gt-DataStream" class="headerlink" title="Select [SplitStream -&gt; DataStream]"></a>Select [SplitStream -&gt; DataStream]</h6><blockquote>
+<p>Select是splitStream的方法，split 只是进行标记，并未进行切分。select切分数据集。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">SplitStream&lt;String&gt; split = text.split(<span class="keyword">new</span> OutputSelector&lt;String&gt;() &#123;</span><br><span class="line"><span class="comment">// 切分数据的时候给每部分数据打上标记</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Iterable&lt;String&gt; <span class="title">select</span><span class="params">(String value)</span> </span>&#123;</span><br><span class="line">        ArrayList&lt;String&gt; strings = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        <span class="keyword">if</span> (value.contains(<span class="string">"h"</span>))</span><br><span class="line">            strings.add(<span class="string">"hadoop"</span>);</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            strings.add(<span class="string">"noHadoop"</span>);</span><br><span class="line">        <span class="keyword">return</span> strings;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 打印有 hadoop 标签的数据</span></span><br><span class="line">split.select(<span class="string">"hadoop"</span>).print();</span><br><span class="line"><span class="comment">// 打印有 noHadoop 标签的数据</span></span><br><span class="line">split.select(<span class="string">"noHadoop"</span>)</span><br><span class="line">    .map(<span class="keyword">new</span> MapFunction&lt;String, String&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> String <span class="title">map</span><span class="params">(String s)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> s.toUpperCase();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    .print();</span><br></pre></td></tr></table></figure>
+
+<h6 id="Partition类-transformation"><a href="#Partition类-transformation" class="headerlink" title="Partition类 transformation"></a>Partition类 transformation</h6><blockquote>
+<ul>
+<li>shuffle: 随机分配，分区相对均衡，容易失去原有数据分区结构</li>
+<li>rebalance: 分布式轮询下游节点，轮询分配。尽可能保证每个分区的数据平衡，多用于数据倾斜  </li>
+<li>rescale: 本地轮流分配。只轮询本节点上的下游操作实例。</li>
+<li>partitionCustom：自定义，只能返回一个操作示例，单播。</li>
+</ul>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Apache/" rel="tag"># Apache</a>
+          
+            <a href="/tags/Flink/" rel="tag"># Flink</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/06/15/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/21.%E5%88%86%E5%8C%BA%E7%9A%84%E7%AE%A1%E7%90%86/" rel="next" title="分区的管理">
+                <i class="fa fa-chevron-left"></i> 分区的管理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/06/16/Apache-Kafka/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Kafka%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/30.%E6%97%A5%E5%BF%97%E5%AD%98%E5%82%A8/" rel="prev" title="日志存储">
+                日志存储 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/blog.jpg"
+               alt="Roman" />
+          <p class="site-author-name" itemprop="name">Roman</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">54</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#DataStream-API介绍和示例"><span class="nav-number">1.</span> <span class="nav-text">DataStream API介绍和示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Flink程序运行流程"><span class="nav-number">1.0.0.1.</span> <span class="nav-text">Flink程序运行流程</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#1-获取执行环境"><span class="nav-number">1.0.0.1.0.1.</span> <span class="nav-text">1. 获取执行环境</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#2-加载创建初始化数据"><span class="nav-number">1.0.0.1.0.2.</span> <span class="nav-text">2. 加载创建初始化数据</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#3-对数据在transformation-operator"><span class="nav-number">1.0.0.1.0.3.</span> <span class="nav-text">3. 对数据在transformation operator</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#4-指定计算结果的输出位置-sink"><span class="nav-number">1.0.0.1.0.4.</span> <span class="nav-text">4. 指定计算结果的输出位置 sink</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#5-触发程序执行-execute"><span class="nav-number">1.0.0.1.0.5.</span> <span class="nav-text">5. 触发程序执行 execute</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#StreamExecutionEnvironment"><span class="nav-number">1.1.</span> <span class="nav-text">StreamExecutionEnvironment</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DataStream-Source"><span class="nav-number">1.2.</span> <span class="nav-text">DataStream Source</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#基于文件的"><span class="nav-number">1.2.0.0.0.1.</span> <span class="nav-text">基于文件的</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Socket流"><span class="nav-number">1.2.0.0.0.2.</span> <span class="nav-text">Socket流</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#基于数据集的"><span class="nav-number">1.2.0.0.0.3.</span> <span class="nav-text">基于数据集的</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Customer-Source-自定义source"><span class="nav-number">1.2.0.0.0.4.</span> <span class="nav-text">Customer Source 自定义source</span></a></li></ol></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DataStream-Transformations"><span class="nav-number">1.3.</span> <span class="nav-text">DataStream Transformations</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#Map-DataStream-gt-DataStream"><span class="nav-number">1.3.0.0.0.1.</span> <span class="nav-text">Map [DataStream -&gt; DataStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#FlatMap-DataStream-gt-DataStream"><span class="nav-number">1.3.0.0.0.2.</span> <span class="nav-text">FlatMap [DataStream -&gt; DataStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Filter-DataStream-gt-DataStream"><span class="nav-number">1.3.0.0.0.3.</span> <span class="nav-text">Filter [DataStream -&gt; DataStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#KeyBy-DataStream-gt-KeyedStream"><span class="nav-number">1.3.0.0.0.4.</span> <span class="nav-text">KeyBy [DataStream -&gt; KeyedStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Reduce-KeyedStream-gt-DataStream"><span class="nav-number">1.3.0.0.0.5.</span> <span class="nav-text">Reduce [KeyedStream -&gt; DataStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Aggregate-keyedStream-gt-DataStream"><span class="nav-number">1.3.0.0.0.6.</span> <span class="nav-text">Aggregate [keyedStream -&gt; DataStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Fold-keyedStream-gt-DataStream"><span class="nav-number">1.3.0.0.0.7.</span> <span class="nav-text">Fold [keyedStream -&gt; DataStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Union"><span class="nav-number">1.3.0.0.0.8.</span> <span class="nav-text">Union</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Connect"><span class="nav-number">1.3.0.0.0.9.</span> <span class="nav-text">Connect</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Split-DataStream-gt-SplitStream"><span class="nav-number">1.3.0.0.0.10.</span> <span class="nav-text">Split [DataStream -&gt; SplitStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Select-SplitStream-gt-DataStream"><span class="nav-number">1.3.0.0.0.11.</span> <span class="nav-text">Select [SplitStream -&gt; DataStream]</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#Partition类-transformation"><span class="nav-number">1.3.0.0.0.12.</span> <span class="nav-text">Partition类 transformation</span></a></li></ol></li></ol></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Roman</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next" target="_blank" rel="noopener">
+    NexT.Gemini
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
